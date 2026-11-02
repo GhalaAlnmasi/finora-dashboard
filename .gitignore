@@ -1,0 +1,17 @@
+cat > .gitignore <<'EOF'
+# .NET build files
+**/bin/
+**/obj/
+
+# IDE files
+.vs/
+.vscode/
+.idea/
+
+# macOS
+.DS_Store
+
+# Local environment
+.env
+.env.*
+EOF
