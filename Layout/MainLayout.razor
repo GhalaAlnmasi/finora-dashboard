@@ -6,7 +6,7 @@
 
 <a class="skip-link" href="#main-content">Skip to content</a>
 
-<div class="shell">
+<div class="shell" @onkeydown="OnShellKey">
     @if (navOpen)
     {
         <div class="nav-backdrop" @onclick="CloseNav"></div>
@@ -39,6 +39,14 @@
     private void ToggleNav() => navOpen = !navOpen;
     private void CloseNav() => navOpen = false;
     private void OnChanged() => InvokeAsync(StateHasChanged);
+
+    private void OnShellKey(KeyboardEventArgs args)
+    {
+        if (args.Key == "Escape" && navOpen)
+        {
+            CloseNav();
+        }
+    }
 
     public void Dispose()
     {

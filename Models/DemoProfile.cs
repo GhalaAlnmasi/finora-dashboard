@@ -1,9 +1,11 @@
+using finora_dashboard.Services;
+
 namespace finora_dashboard.Models;
 
 public sealed class DemoProfile
 {
-    public string DisplayName { get; set; } = "Ghala Alshammari";
-    public string City { get; set; } = "Riyadh";
+    public string DisplayName { get; set; } = DemoPersona.DisplayName;
+    public string City { get; set; } = DemoPersona.City;
 
     public string FirstName
     {

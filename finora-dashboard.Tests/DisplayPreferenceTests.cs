@@ -9,6 +9,7 @@ public class DisplayPreferenceTests
     [Fact]
     public void Initials_UseFirstAndLastWords()
     {
+        Assert.Equal("LF", DemoProfile.InitialsFrom(DemoPersona.DisplayName));
         Assert.Equal("GA", DemoProfile.InitialsFrom("Ghala Alshammari"));
         Assert.Equal("FN", DemoProfile.InitialsFrom("  "));
         Assert.Equal("SA", DemoProfile.InitialsFrom("Sara"));

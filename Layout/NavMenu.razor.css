@@ -143,6 +143,7 @@
 .menu__profile p {
     font-size: 0.85rem;
     font-weight: 600;
+    overflow-wrap: anywhere;
 }
 
 .menu__profile small {

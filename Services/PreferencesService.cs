@@ -7,7 +7,7 @@ namespace finora_dashboard.Services;
 public sealed class PreferencesService(IJSRuntime js)
 {
     public const string StorageKey = "finora.preferences.v1";
-    public const string AppVersion = "1.5.0-demo";
+    public const string AppVersion = "1.0.0";
 
     private bool _loaded;
     private UserPreferencesDocument _document = CreateDefault();
@@ -138,13 +138,13 @@ public sealed class PreferencesService(IJSRuntime js)
 
     private static UserPreferencesDocument Normalize(UserPreferencesDocument document)
     {
-        var name = string.IsNullOrWhiteSpace(document.DisplayName) ? "Ghala Alshammari" : document.DisplayName.Trim();
+        var name = string.IsNullOrWhiteSpace(document.DisplayName) ? DemoPersona.DisplayName : document.DisplayName.Trim();
         if (name.Length > 80)
         {
             name = name[..80].Trim();
         }
 
-        var city = string.IsNullOrWhiteSpace(document.City) ? "Riyadh" : document.City.Trim();
+        var city = string.IsNullOrWhiteSpace(document.City) ? DemoPersona.City : document.City.Trim();
         if (city.Length > 80)
         {
             city = city[..80].Trim();

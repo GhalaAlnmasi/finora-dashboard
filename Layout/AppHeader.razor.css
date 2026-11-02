@@ -6,17 +6,39 @@
     padding: 1.1rem 1.75rem 0.4rem;
 }
 
+.header__copy {
+    min-width: 0;
+}
+
 .header__title {
     font-size: 1.05rem;
     font-weight: 700;
     letter-spacing: -0.03em;
     color: var(--fn-dark);
+    overflow-wrap: anywhere;
 }
 
 .kicker {
     color: var(--fn-muted);
     font-size: 0.78rem;
     font-weight: 600;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+}
+
+.demo-chip {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 999px;
+    padding: 0.08rem 0.45rem;
+    background: var(--fn-primary-soft);
+    color: var(--fn-primary);
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
 }
 
 .header__meta {
@@ -60,7 +82,7 @@
     width: 40px;
     height: 40px;
     border: 1px solid var(--fn-border);
-    background: white;
+    background: var(--fn-card);
     border-radius: 12px;
     color: var(--fn-dark);
     cursor: pointer;

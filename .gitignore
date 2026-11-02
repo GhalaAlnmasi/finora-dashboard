@@ -1,12 +1,15 @@
-cat > .gitignore <<'EOF'
-# .NET build files
+# .NET
 **/bin/
 **/obj/
+.publish/
+publish/
 
-# IDE files
+# IDE
 .vs/
 .vscode/
 .idea/
+*.user
+*.suo
 
 # macOS
 .DS_Store
@@ -14,4 +17,6 @@ cat > .gitignore <<'EOF'
 # Local environment
 .env
 .env.*
-EOF
+
+# .NET install used by hosting builds
+.dotnet/

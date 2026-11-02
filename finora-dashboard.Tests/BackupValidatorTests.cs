@@ -56,7 +56,7 @@ public class BackupValidatorTests
         Assert.NotNull(result.Backup);
         Assert.Single(result.Backup!.Finance!.Transactions);
         Assert.Single(result.Backup.Budgets!.Budgets);
-        Assert.Equal("Ghala Alshammari", result.Backup.Preferences!.DisplayName);
+        Assert.Equal(DemoPersona.DisplayName, result.Backup.Preferences!.DisplayName);
     }
 
     [Fact]
@@ -129,8 +129,8 @@ public class BackupValidatorTests
         },
         Preferences = new UserPreferencesDocument
         {
-            DisplayName = "Ghala Alshammari",
-            City = "Riyadh",
+            DisplayName = DemoPersona.DisplayName,
+            City = DemoPersona.City,
             Theme = AppTheme.Light,
             SarFormat = SarDisplayFormat.CodePrefix,
             DateFormat = DateDisplayFormat.Medium

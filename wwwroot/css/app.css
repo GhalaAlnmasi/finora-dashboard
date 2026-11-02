@@ -19,6 +19,8 @@
     --fn-focus: 0 0 0 3px rgba(22, 107, 87, 0.28);
     --fn-font: "Plus Jakarta Sans", "Segoe UI", sans-serif;
     --fn-dialog-scrim: rgba(20, 45, 41, 0.46);
+    --fn-sidebar-start: #1A3832;
+    --fn-sidebar-end: #142D29;
     color-scheme: light;
 }
 
@@ -38,6 +40,8 @@ html[data-theme="dark"] {
     --fn-shadow: 0 1px 2px rgba(0, 0, 0, 0.24), 0 12px 32px rgba(0, 0, 0, 0.28);
     --fn-focus: 0 0 0 3px rgba(77, 184, 154, 0.42);
     --fn-dialog-scrim: rgba(4, 10, 9, 0.72);
+    --fn-sidebar-start: #122420;
+    --fn-sidebar-end: #0B1614;
     color-scheme: dark;
 }
 
@@ -89,8 +93,8 @@ img {
     left: 1rem;
     top: -3rem;
     z-index: 100;
-    background: var(--fn-dark);
-    color: white;
+    background: #142D29;
+    color: #F7F9F8;
     padding: 0.55rem 0.9rem;
     border-radius: 8px;
 }
@@ -357,6 +361,7 @@ img {
 .dialog-actions {
     display: flex;
     justify-content: flex-end;
+    flex-wrap: wrap;
     gap: 0.55rem;
     margin-top: 1.1rem;
 }
@@ -369,5 +374,22 @@ img {
 @media (max-width: 900px) {
     .workspace-main {
         padding: 0 1rem 1.75rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .dialog {
+        width: 100%;
+        max-height: min(94dvh, 720px);
+        padding: 1.1rem 1rem 1rem;
+        border-radius: 16px;
+    }
+
+    .dialog-actions {
+        flex-direction: column-reverse;
+    }
+
+    .dialog-actions .btn {
+        width: 100%;
     }
 }

@@ -29,6 +29,8 @@ h1 {
     color: var(--fn-muted);
     font-size: 0.9rem;
     margin-top: 0.25rem;
+    max-width: 58ch;
+    overflow-wrap: anywhere;
 }
 
 .stats {

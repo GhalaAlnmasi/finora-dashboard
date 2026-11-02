@@ -2,7 +2,7 @@
     display: inline-flex;
     align-items: center;
     gap: 0.35rem;
-    background: white;
+    background: var(--fn-card);
     border: 1px solid var(--fn-border);
     border-radius: 999px;
     padding: 0.2rem;
@@ -47,4 +47,11 @@
 .month-selector__btn ::deep svg {
     width: 16px;
     height: 16px;
+}
+
+@media (max-width: 480px) {
+    .month-selector__label {
+        min-width: 7.25rem;
+        font-size: 0.8rem;
+    }
 }

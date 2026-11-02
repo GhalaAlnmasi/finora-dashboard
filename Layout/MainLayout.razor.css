@@ -1,6 +1,6 @@
 .sidebar {
     width: var(--fn-sidebar);
-    background: linear-gradient(180deg, #1A3832 0%, var(--fn-dark) 58%);
+    background: linear-gradient(180deg, var(--fn-sidebar-start) 0%, var(--fn-sidebar-end) 58%);
     color: white;
     display: flex;
     flex-direction: column;
