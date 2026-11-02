@@ -20,14 +20,8 @@ public sealed class TransactionStateService(IJSRuntime js)
     private decimal _openingBalance = DemoTransactionSeed.OpeningBalance;
     private bool _loaded;
 
-    public DemoProfile Profile { get; } = new()
-    {
-        FirstName = "Ghala",
-        LastName = "Alshammari",
-        City = "Riyadh"
-    };
-
     public bool IsReady => _loaded;
+    public bool LastWriteFailed { get; private set; }
     public event Action? Changed;
 
     public DateOnly Today => DateOnly.FromDateTime(DateTime.Now);
@@ -134,6 +128,31 @@ public sealed class TransactionStateService(IJSRuntime js)
         _transactions.RemoveAll(t => t.Id == id);
         await PersistAsync();
         Changed?.Invoke();
+    }
+
+    public FinanceStoreDocument ExportDocument() => new()
+    {
+        Version = 1,
+        OpeningBalance = _openingBalance,
+        Transactions = _transactions.Select(t => t.Clone()).ToList()
+    };
+
+    public async Task<bool> ReplaceFromDocumentAsync(FinanceStoreDocument document)
+    {
+        _openingBalance = document.OpeningBalance;
+        _transactions.Clear();
+        _transactions.AddRange(document.Transactions.Select(t => Normalize(t.Clone())));
+        var ok = await PersistAsync();
+        Changed?.Invoke();
+        return ok;
+    }
+
+    public async Task<bool> ResetToSeedAsync()
+    {
+        Seed();
+        var ok = await PersistAsync();
+        Changed?.Invoke();
+        return ok;
     }
 
     public bool IsCompleted(Transaction transaction) => transaction.Date <= Today;
@@ -257,17 +276,20 @@ public sealed class TransactionStateService(IJSRuntime js)
         _transactions.AddRange(DemoTransactionSeed.Create());
     }
 
-    private async Task PersistAsync()
+    private async Task<bool> PersistAsync()
     {
-        var document = new FinanceStoreDocument
+        var json = JsonSerializer.Serialize(ExportDocument(), JsonOptions);
+        try
         {
-            Version = 1,
-            OpeningBalance = _openingBalance,
-            Transactions = _transactions.Select(t => t.Clone()).ToList()
-        };
-
-        var json = JsonSerializer.Serialize(document, JsonOptions);
-        await js.InvokeVoidAsync("finora.storageSet", StorageKey, json);
+            var ok = await js.InvokeAsync<bool>("finora.storageSet", StorageKey, json);
+            LastWriteFailed = !ok;
+            return ok;
+        }
+        catch (JSException)
+        {
+            LastWriteFailed = true;
+            return false;
+        }
     }
 
     private static Transaction ToTransaction(TransactionDraft draft, string id)

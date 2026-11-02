@@ -60,7 +60,7 @@
 
 .track {
     fill: none;
-    stroke: #E7F1EC;
+    stroke: var(--fn-border);
     stroke-width: 16;
 }
 

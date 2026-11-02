@@ -23,7 +23,7 @@
                     <span class="avatar" aria-hidden="true">@(item.Description.Length == 0 ? "?" : item.Description[0])</span>
                     <div>
                         <p class="merchant">@item.Description</p>
-                        <p class="meta">@item.Category · @item.Date.ToString("d MMM")</p>
+                        <p class="meta">@item.Category · @Dates.FormatShort(item.Date)</p>
                     </div>
                     <p class="amount @(item.Type == TransactionType.Income ? "is-in" : "is-out")">
                         @(item.Type == TransactionType.Income ? "+" : "−")@Money.Sar(item.Amount)
@@ -38,5 +38,5 @@
     [Parameter, EditorRequired] public IReadOnlyList<Transaction> Items { get; set; } = [];
     [Parameter, EditorRequired] public DateOnly Month { get; set; }
 
-    private string MonthLabel => Month.ToString("MMMM yyyy");
+    private string MonthLabel => Dates.FormatMonth(Month);
 }

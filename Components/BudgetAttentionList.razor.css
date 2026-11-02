@@ -29,7 +29,7 @@
     gap: 0.75rem;
     align-items: baseline;
     padding: 0.75rem 0;
-    border-top: 1px solid #EEF3F0;
+    border-top: 1px solid var(--fn-border);
     font-size: 0.9rem;
 }
 
@@ -45,6 +45,10 @@
 .pct {
     font-weight: 700;
     font-variant-numeric: tabular-nums;
+}
+
+.is-limit .pct {
+    color: var(--fn-primary);
 }
 
 .is-warn .pct {

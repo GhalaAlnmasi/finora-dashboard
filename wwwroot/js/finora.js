@@ -9,9 +9,27 @@ window.finora = {
     storageSet: function (key, value) {
         try {
             window.localStorage.setItem(key, value);
+            return true;
         } catch {
-            // Ignore quota / private-mode failures; in-memory state still works for the session.
+            return false;
         }
+    },
+    setTheme: function (theme) {
+        var value = theme === "dark" ? "dark" : "light";
+        document.documentElement.setAttribute("data-theme", value);
+        document.documentElement.style.colorScheme = value;
+    },
+    downloadText: function (filename, contents) {
+        var blob = new Blob([contents], { type: "application/json" });
+        var url = URL.createObjectURL(blob);
+        var link = document.createElement("a");
+        link.href = url;
+        link.download = filename;
+        link.rel = "noopener";
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        URL.revokeObjectURL(url);
     },
     focus: function (id) {
         document.getElementById(id)?.focus();

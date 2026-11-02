@@ -14,7 +14,7 @@
              @onclick:stopPropagation="true"
              @onkeydown="OnKeyDown">
             <h2 id="budget-dialog-title">@(IsEdit ? "Edit budget" : "Add budget")</h2>
-            <p class="hint">Demo envelope for @Draft.Month.ToString("MMMM yyyy"). Saved in this browser only.</p>
+            <p class="hint">Demo envelope for @Dates.FormatMonth(Draft.Month). Saved in this browser only.</p>
 
             <EditForm Model="Draft" OnValidSubmit="SaveAsync">
                 <DataAnnotationsValidator />

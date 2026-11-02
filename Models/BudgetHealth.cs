@@ -4,5 +4,6 @@ public enum BudgetHealth
 {
     OnTrack,
     Warning,
+    AtLimit,
     Over
 }

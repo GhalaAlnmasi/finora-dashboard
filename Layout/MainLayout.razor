@@ -1,6 +1,8 @@
 ﻿@inherits LayoutComponentBase
 @implements IDisposable
+@inject PreferencesService Preferences
 @inject TransactionStateService Finance
+@inject BudgetStateService BudgetStore
 
 <a class="skip-link" href="#main-content">Skip to content</a>
 
@@ -11,11 +13,11 @@
     }
 
     <aside id="app-sidebar" class="sidebar @(navOpen ? "is-open" : null)">
-        <NavMenu OnNavigate="CloseNav" />
+        <NavMenu Profile="Preferences.Profile" OnNavigate="CloseNav" />
     </aside>
 
     <div class="workspace">
-        <AppHeader Profile="Finance.Profile" NavOpen="navOpen" OnToggleNav="ToggleNav" />
+        <AppHeader Profile="Preferences.Profile" NavOpen="navOpen" OnToggleNav="ToggleNav" />
         <main id="main-content" class="workspace-main">
             @Body
         </main>
@@ -27,12 +29,20 @@
 
     protected override async Task OnInitializedAsync()
     {
+        Preferences.Changed += OnChanged;
         Finance.Changed += OnChanged;
+        await Preferences.EnsureLoadedAsync();
         await Finance.EnsureLoadedAsync();
+        await BudgetStore.EnsureLoadedAsync();
     }
 
     private void ToggleNav() => navOpen = !navOpen;
     private void CloseNav() => navOpen = false;
     private void OnChanged() => InvokeAsync(StateHasChanged);
-    public void Dispose() => Finance.Changed -= OnChanged;
+
+    public void Dispose()
+    {
+        Preferences.Changed -= OnChanged;
+        Finance.Changed -= OnChanged;
+    }
 }

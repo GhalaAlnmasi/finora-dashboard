@@ -14,15 +14,18 @@ public static class BudgetMath
             ? 0
             : Math.Round(safeSpent / budget.Limit * 100m, 1, MidpointRounding.AwayFromZero);
 
-        var health = percent >= 100m
+        var health = safeSpent > budget.Limit
             ? BudgetHealth.Over
-            : percent >= WarningThreshold
-                ? BudgetHealth.Warning
-                : BudgetHealth.OnTrack;
+            : budget.Limit > 0 && safeSpent == budget.Limit
+                ? BudgetHealth.AtLimit
+                : percent >= WarningThreshold
+                    ? BudgetHealth.Warning
+                    : BudgetHealth.OnTrack;
 
         var status = health switch
         {
             BudgetHealth.Over => $"Over budget by {Money.Sar(Math.Abs(remaining))}",
+            BudgetHealth.AtLimit => "At limit · 100% used",
             BudgetHealth.Warning => $"{percent:0.#}% used · approaching limit",
             _ => remaining == budget.Limit ? "No completed spending yet" : $"{percent:0.#}% used"
         };

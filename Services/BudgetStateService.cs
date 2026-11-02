@@ -5,7 +5,7 @@ using Microsoft.JSInterop;
 
 namespace finora_dashboard.Services;
 
-public sealed class BudgetStateService
+public sealed class BudgetStateService : IDisposable
 {
     public const string StorageKey = "finora.budgets.v1";
 
@@ -25,10 +25,11 @@ public sealed class BudgetStateService
     {
         _js = js;
         _transactions = transactions;
-        _transactions.Changed += () => Changed?.Invoke();
+        _transactions.Changed += OnTransactionsChanged;
     }
 
     public bool IsReady => _loaded;
+    public bool LastWriteFailed { get; private set; }
     public event Action? Changed;
     public IReadOnlyList<CategoryBudget> Budgets => _budgets;
 
@@ -188,21 +189,56 @@ public sealed class BudgetStateService
         Changed?.Invoke();
     }
 
+    public BudgetStoreDocument ExportDocument() => new()
+    {
+        Version = 1,
+        Budgets = _budgets.Select(b => b.Clone()).ToList()
+    };
+
+    public async Task<bool> ReplaceFromDocumentAsync(BudgetStoreDocument document)
+    {
+        _budgets.Clear();
+        _budgets.AddRange(document.Budgets
+            .Where(IsValid)
+            .Select(b => Normalize(b.Clone()))
+            .GroupBy(b => (b.Category, b.Month))
+            .Select(g => g.First()));
+        var ok = await PersistAsync();
+        Changed?.Invoke();
+        return ok;
+    }
+
+    public async Task<bool> ResetToSeedAsync()
+    {
+        Seed();
+        var ok = await PersistAsync();
+        Changed?.Invoke();
+        return ok;
+    }
+
+    public void Dispose() => _transactions.Changed -= OnTransactionsChanged;
+
+    private void OnTransactionsChanged() => Changed?.Invoke();
+
     private void Seed()
     {
         _budgets.Clear();
         _budgets.AddRange(DemoBudgetSeed.Create());
     }
 
-    private async Task PersistAsync()
+    private async Task<bool> PersistAsync()
     {
-        var document = new BudgetStoreDocument
+        try
         {
-            Version = 1,
-            Budgets = _budgets.Select(b => b.Clone()).ToList()
-        };
-
-        await _js.InvokeVoidAsync("finora.storageSet", StorageKey, JsonSerializer.Serialize(document, JsonOptions));
+            var ok = await _js.InvokeAsync<bool>("finora.storageSet", StorageKey, JsonSerializer.Serialize(ExportDocument(), JsonOptions));
+            LastWriteFailed = !ok;
+            return ok;
+        }
+        catch (JSException)
+        {
+            LastWriteFailed = true;
+            return false;
+        }
     }
 
     private static bool IsValid(CategoryBudget budget) =>

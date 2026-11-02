@@ -17,7 +17,7 @@
     </div>
 
     <div class="header__meta">
-        <time datetime="@Today.ToString("yyyy-MM-dd")">@Today.ToString("dddd, d MMMM yyyy")</time>
+        <time datetime="@Today.ToString("yyyy-MM-dd")">@Dates.FormatWeekday(Today)</time>
         <div class="header__profile" title="@Profile.FullName">
             <span class="header__city">@Profile.City</span>
             <span class="header__avatar" aria-hidden="true">@Profile.Initials</span>

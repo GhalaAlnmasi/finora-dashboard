@@ -44,7 +44,7 @@
                 @foreach (var point in Points)
                 {
                     <tr>
-                        <td>@point.Month.ToString("MMMM yyyy")</td>
+                        <td>@Dates.FormatMonth(point.Month)</td>
                         <td>@Money.Sar(Selector(point))</td>
                     </tr>
                 }

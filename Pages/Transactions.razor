@@ -115,7 +115,7 @@
                     {
                         <tr>
                             <td>
-                                <time datetime="@item.Date.ToString("yyyy-MM-dd")">@item.Date.ToString("d MMM yyyy")</time>
+                                <time datetime="@item.Date.ToString("yyyy-MM-dd")">@Dates.Format(item.Date)</time>
                                 @if (!Store.IsCompleted(item))
                                 {
                                     <span class="pill">Scheduled</span>
@@ -148,7 +148,7 @@
                     <div class="cards__top">
                         <div>
                             <p class="cards__title">@item.Description</p>
-                            <p class="cards__meta">@item.Category · @item.Date.ToString("d MMM yyyy")</p>
+                            <p class="cards__meta">@item.Category · @Dates.Format(item.Date)</p>
                         </div>
                         <p class="amount @(item.Type == TransactionType.Income ? "is-in" : "is-out")">
                             @(item.Type == TransactionType.Income ? "+" : "−")@Money.Sar(item.Amount)

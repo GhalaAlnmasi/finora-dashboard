@@ -1,5 +1,4 @@
-﻿@using finora_dashboard.Services
-@inject TransactionStateService Finance
+﻿@using finora_dashboard.Models
 
 <div class="nav-root">
 <div class="brand">
@@ -44,14 +43,15 @@
 </nav>
 
 <div class="menu__profile">
-    <span class="menu__avatar" aria-hidden="true">@Finance.Profile.Initials</span>
+    <span class="menu__avatar" aria-hidden="true">@Profile.Initials</span>
     <div>
-        <p>@Finance.Profile.FullName</p>
+        <p>@Profile.FullName</p>
         <small>Demo · local data</small>
     </div>
 </div>
 </div>
 
 @code {
+    [Parameter, EditorRequired] public DemoProfile Profile { get; set; } = default!;
     [Parameter] public EventCallback OnNavigate { get; set; }
 }

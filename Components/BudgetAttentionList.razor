@@ -5,7 +5,7 @@
     <header class="panel__header">
         <div>
             <h2 id="budget-attn-heading">Budget performance</h2>
-            <p>Categories approaching or past their @Month.ToString("MMMM yyyy") envelope.</p>
+            <p>Categories approaching or past their @Dates.FormatMonth(Month) envelope.</p>
         </div>
     </header>
 
@@ -33,6 +33,10 @@
     [Parameter, EditorRequired] public DateOnly Month { get; set; }
     [Parameter] public string EmptyMessage { get; set; } = "All envelopes are on track for this month.";
 
-    private static string Tone(BudgetProgress item) =>
-        item.Health == BudgetHealth.Over ? "is-over" : "is-warn";
+    private static string Tone(BudgetProgress item) => item.Health switch
+    {
+        BudgetHealth.Over => "is-over",
+        BudgetHealth.AtLimit => "is-limit",
+        _ => "is-warn"
+    };
 }

@@ -6,7 +6,7 @@
             @onclick="Previous">
         <Icon Name="chevron-left" />
     </button>
-    <p class="month-selector__label" aria-live="polite">@Selected.ToString("MMMM yyyy")</p>
+    <p class="month-selector__label" aria-live="polite">@Dates.FormatMonth(Selected)</p>
     <button type="button"
             class="month-selector__btn"
             aria-label="Next month"

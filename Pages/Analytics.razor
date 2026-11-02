@@ -42,12 +42,12 @@
             </div>
         </section>
 
-        <p class="demo-note">@RangeLabel · vs @previousMonth.ToString("MMMM yyyy")</p>
+        <p class="demo-note">@RangeLabel · vs @Dates.FormatMonth(previousMonth)</p>
 
         @if (!hasMonthActivity && string.IsNullOrEmpty(categoryFilter))
         {
             <div class="empty-card">
-                <h2>No completed activity in @selectedMonth.ToString("MMMM yyyy")</h2>
+                <h2>No completed activity in @Dates.FormatMonth(selectedMonth)</h2>
                 <p>Add transactions dated on or before today, or choose another month.</p>
                 <a class="btn btn-primary" href="transactions">Open transactions</a>
             </div>
@@ -78,7 +78,7 @@
             </section>
 
             <div class="charts">
-                <IncomeExpenseChart Points="trend" Subtitle="@($"{lookback}-month trend ending {selectedMonth:MMMM yyyy}")" />
+                <IncomeExpenseChart Points="trend" Subtitle="@($"{lookback}-month trend ending {Dates.FormatMonth(selectedMonth)}")" />
                 <CategoryDonutChart Items="breakdown" />
             </div>
 
@@ -117,10 +117,10 @@
     private IReadOnlyList<BudgetProgress> attention = [];
 
     private string? CategoryOrNull => string.IsNullOrWhiteSpace(categoryFilter) ? null : categoryFilter;
-    private string RangeLabel => $"{AnalyticsMath.FirstOfMonth(selectedMonth).AddMonths(1 - lookback):MMM yyyy}–{selectedMonth:MMM yyyy}";
+    private string RangeLabel => $"{Dates.FormatMonthShort(AnalyticsMath.FirstOfMonth(selectedMonth).AddMonths(1 - lookback))}–{Dates.FormatMonthShort(selectedMonth)}";
     private string BudgetEmpty => string.IsNullOrEmpty(categoryFilter)
         ? "All envelopes are on track, or no budgets exist for this month."
-        : $"No watch or over-limit state for {categoryFilter} this month.";
+        : $"No watch, at-limit, or over-budget state for {categoryFilter} this month.";
 
     protected override async Task OnInitializedAsync()
     {

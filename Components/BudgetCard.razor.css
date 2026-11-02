@@ -42,6 +42,11 @@
     color: var(--fn-warning);
 }
 
+.is-limit .badge {
+    background: var(--fn-accent);
+    color: var(--fn-dark);
+}
+
 .is-over .badge {
     background: #FDECEC;
     color: var(--fn-danger);
@@ -69,7 +74,7 @@
 
 .meter {
     height: 8px;
-    background: #E7F1EC;
+    background: var(--fn-primary-soft);
     border-radius: 99px;
     overflow: hidden;
 }
@@ -79,6 +84,10 @@
     height: 100%;
     background: var(--fn-primary);
     border-radius: inherit;
+}
+
+.is-limit .meter__fill {
+    background: var(--fn-primary);
 }
 
 .is-warn .meter__fill {

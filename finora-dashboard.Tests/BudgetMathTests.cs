@@ -28,6 +28,19 @@ public class BudgetMathTests
     }
 
     [Fact]
+    public void Evaluate_AtLimit_WhenUsageIsExactlyOneHundredPercent()
+    {
+        var result = BudgetMath.Evaluate(Budget("Housing", 7_200m), 7_200m);
+
+        Assert.Equal(BudgetHealth.AtLimit, result.Health);
+        Assert.Equal(0m, result.Remaining);
+        Assert.Equal(100m, result.PercentUsed);
+        Assert.Equal(100d, BudgetMath.MeterPercent(result.PercentUsed));
+        Assert.Contains("At limit", result.StatusLabel);
+        Assert.DoesNotContain("Over budget", result.StatusLabel);
+    }
+
+    [Fact]
     public void Evaluate_Over_WhenSpendingExceedsLimit()
     {
         var result = BudgetMath.Evaluate(Budget("Shopping", 1_000m), 1_250m);
@@ -38,6 +51,16 @@ public class BudgetMathTests
         Assert.Equal(100d, BudgetMath.MeterPercent(result.PercentUsed));
         Assert.Contains("Over budget", result.StatusLabel);
         Assert.Contains("SAR", result.StatusLabel);
+    }
+
+    [Fact]
+    public void Evaluate_Over_WhenUsageIsJustAboveOneHundredPercent()
+    {
+        var result = BudgetMath.Evaluate(Budget("Transport", 1_000m), 1_000.01m);
+
+        Assert.Equal(BudgetHealth.Over, result.Health);
+        Assert.True(result.Remaining < 0);
+        Assert.Contains("Over budget", result.StatusLabel);
     }
 
     [Fact]

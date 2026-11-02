@@ -65,7 +65,7 @@
         else
         {
             <div class="empty-card">
-                <h2>No budgets for @selectedMonth.ToString("MMMM yyyy")</h2>
+                <h2>No budgets for @Dates.FormatMonth(selectedMonth)</h2>
                 <p>Create a category envelope to track completed spending against a monthly limit.</p>
                 <button type="button" class="btn btn-primary" @onclick="OpenCreate">Add budget</button>
             </div>
@@ -98,7 +98,7 @@
 
     private string DeleteMessage => pendingDelete is null
         ? ""
-        : $"Remove the {pendingDelete.Category} envelope for {pendingDelete.Month:MMMM yyyy}? Spending history is kept; only this demo budget is deleted.";
+        : $"Remove the {pendingDelete.Category} envelope for {Dates.FormatMonth(pendingDelete.Month)}? Spending history is kept; only this demo budget is deleted.";
 
     protected override async Task OnInitializedAsync()
     {

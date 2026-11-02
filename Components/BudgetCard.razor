@@ -52,6 +52,7 @@
     private string ToneClass => Progress.Health switch
     {
         BudgetHealth.Over => "is-over",
+        BudgetHealth.AtLimit => "is-limit",
         BudgetHealth.Warning => "is-warn",
         _ => "is-ok"
     };
@@ -59,6 +60,7 @@
     private string Badge => Progress.Health switch
     {
         BudgetHealth.Over => "Over",
+        BudgetHealth.AtLimit => "At limit",
         BudgetHealth.Warning => "Watch",
         _ => "On track"
     };

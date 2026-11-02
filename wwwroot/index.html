@@ -6,6 +6,23 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>FINORA</title>
     <base href="/" />
+    <script>
+        (function () {
+            try {
+                var raw = window.localStorage.getItem("finora.preferences.v1");
+                if (!raw) {
+                    return;
+                }
+                var prefs = JSON.parse(raw);
+                if ((prefs.theme || "").toLowerCase() === "dark") {
+                    document.documentElement.setAttribute("data-theme", "dark");
+                    document.documentElement.style.colorScheme = "dark";
+                }
+            } catch (e) {
+                // Keep the default light theme if stored preferences cannot be read.
+            }
+        })();
+    </script>
     <link rel="preload" id="webassembly" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />

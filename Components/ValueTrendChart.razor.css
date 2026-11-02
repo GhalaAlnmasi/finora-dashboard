@@ -27,13 +27,13 @@
     gap: 0.45rem;
     height: 180px;
     padding: 0.4rem 0.2rem 0;
-    border-bottom: 1px solid #E7EEEA;
+    border-bottom: 1px solid var(--fn-border);
     background-image: repeating-linear-gradient(
         to top,
         transparent,
         transparent 35px,
-        #E7EEEA 35px,
-        #E7EEEA 36px
+        var(--fn-border) 35px,
+        var(--fn-border) 36px
     );
 }
 

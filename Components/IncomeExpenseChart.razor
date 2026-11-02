@@ -47,7 +47,7 @@
                 @foreach (var point in Points)
                 {
                     <tr>
-                        <td>@point.Month.ToString("MMMM yyyy")</td>
+                        <td>@Dates.FormatMonth(point.Month)</td>
                         <td>@Money.Sar(point.Income)</td>
                         <td>@Money.Sar(point.Expenses)</td>
                     </tr>
@@ -62,7 +62,7 @@
     [Parameter] public string? Subtitle { get; set; }
 
     private decimal Max => Math.Max(1, Points.SelectMany(p => new[] { p.Income, p.Expenses }).DefaultIfEmpty().Max());
-    private string EndLabel => Points.Count == 0 ? string.Empty : Points[^1].Month.ToString("MMMM yyyy");
+    private string EndLabel => Points.Count == 0 ? string.Empty : Dates.FormatMonth(Points[^1].Month);
     private string HeaderSub => Subtitle ?? $"Six-month trend ending {EndLabel}";
     private string Description => string.Join(". ", Points.Select(p =>
         $"{p.Month:MMMM}: income {Money.Sar(p.Income)}, expenses {Money.Sar(p.Expenses)}"));
