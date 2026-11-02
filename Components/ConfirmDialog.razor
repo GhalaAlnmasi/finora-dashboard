@@ -1,0 +1,65 @@
+@inject IJSRuntime JS
+
+@if (Open)
+{
+    <div class="dialog-backdrop" @onclick="Cancel">
+        <div class="dialog"
+             role="dialog"
+             aria-modal="true"
+             aria-labelledby="confirm-title"
+             aria-describedby="confirm-body"
+             tabindex="-1"
+             @ref="panel"
+             @onclick:stopPropagation="true"
+             @onkeydown="OnKeyDown">
+            <h2 id="confirm-title">@Title</h2>
+            <p id="confirm-body" class="hint">@Message</p>
+            <div class="dialog-actions">
+                <button type="button" class="btn btn-ghost" @onclick="Cancel" @ref="cancelButton">Cancel</button>
+                <button type="button" class="btn btn-danger" @onclick="Confirm">@ConfirmLabel</button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public bool Open { get; set; }
+    [Parameter] public string Title { get; set; } = "Are you sure?";
+    [Parameter] public string Message { get; set; } = "";
+    [Parameter] public string ConfirmLabel { get; set; } = "Delete";
+    [Parameter] public EventCallback OnCancel { get; set; }
+    [Parameter] public EventCallback OnConfirm { get; set; }
+
+    private ElementReference panel;
+    private ElementReference cancelButton;
+    private bool activateRequested;
+
+    protected override void OnParametersSet()
+    {
+        if (Open)
+        {
+            activateRequested = true;
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (Open && activateRequested)
+        {
+            activateRequested = false;
+            await JS.InvokeVoidAsync("finora.bindFocusTrap", panel);
+            await cancelButton.FocusAsync();
+        }
+    }
+
+    private Task Cancel() => OnCancel.InvokeAsync();
+    private Task Confirm() => OnConfirm.InvokeAsync();
+
+    private async Task OnKeyDown(KeyboardEventArgs args)
+    {
+        if (args.Key == "Escape")
+        {
+            await Cancel();
+        }
+    }
+}

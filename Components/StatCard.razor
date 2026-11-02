@@ -1,0 +1,29 @@
+<article class="stat-card">
+    <div class="stat-card__icon" aria-hidden="true">
+        <Icon Name="@IconName" />
+    </div>
+    <p class="stat-card__label">@Label</p>
+    <p class="stat-card__value">@Value</p>
+    @if (!string.IsNullOrWhiteSpace(Change))
+    {
+        <p class="stat-card__change @ToneClass">
+            <span>@Change</span>
+            <span class="stat-card__hint">vs last month</span>
+        </p>
+    }
+</article>
+
+@code {
+    [Parameter, EditorRequired] public string Label { get; set; } = "";
+    [Parameter, EditorRequired] public string Value { get; set; } = "";
+    [Parameter] public string IconName { get; set; } = "wallet";
+    [Parameter] public string? Change { get; set; }
+    [Parameter] public string Tone { get; set; } = "neutral";
+
+    private string ToneClass => Tone switch
+    {
+        "positive" => "is-positive",
+        "negative" => "is-negative",
+        _ => "is-neutral"
+    };
+}

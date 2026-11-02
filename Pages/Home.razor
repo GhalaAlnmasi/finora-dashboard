@@ -1,7 +1,116 @@
 ﻿@page "/"
+@implements IDisposable
+@inject TransactionStateService Finance
 
-<PageTitle>Home</PageTitle>
+<PageTitle>Overview · FINORA</PageTitle>
 
-<h1>Hello, world!</h1>
+<div class="overview">
+    <div class="overview__intro">
+        <div>
+            <p class="eyebrow">Overview</p>
+            <h1>Your finances at a glance</h1>
+            <p class="sub">Demo totals in SAR, calculated from local browser data. Future-dated transactions are excluded until their date.</p>
+        </div>
+        @if (Finance.IsReady)
+        {
+            <MonthSelector Months="Finance.AvailableMonths" Selected="selectedMonth" SelectedChanged="OnMonthChanged" />
+        }
+    </div>
 
-Welcome to your new app.
+    @if (!Finance.IsReady || summary is null)
+    {
+        <p class="demo-note">Loading local demo data…</p>
+    }
+    else
+    {
+        <section class="stats" aria-label="Monthly highlights">
+            <StatCard Label="Total balance"
+                      Value="@Money.Sar(summary.TotalBalance)"
+                      IconName="wallet"
+                      Change="@Money.Percent(summary.BalanceChangePercent)"
+                      Tone="@Tone(summary.BalanceChangePercent, invert: false)" />
+            <StatCard Label="Monthly income"
+                      Value="@Money.Sar(summary.Income)"
+                      IconName="income"
+                      Change="@Money.Percent(summary.IncomeChangePercent)"
+                      Tone="@Tone(summary.IncomeChangePercent, invert: false)" />
+            <StatCard Label="Monthly expenses"
+                      Value="@Money.Sar(summary.Expenses)"
+                      IconName="expense"
+                      Change="@Money.Percent(summary.ExpenseChangePercent)"
+                      Tone="@Tone(summary.ExpenseChangePercent, invert: true)" />
+            <StatCard Label="Savings"
+                      Value="@Money.Sar(summary.Savings)"
+                      IconName="savings"
+                      Change="@Money.Percent(summary.SavingsChangePercent)"
+                      Tone="@Tone(summary.SavingsChangePercent, invert: false)" />
+        </section>
+
+        <div class="charts">
+            <IncomeExpenseChart Points="trend" />
+            <CategoryDonutChart Items="categories" />
+        </div>
+
+        <RecentTransactions Items="recent" Month="selectedMonth" />
+        <p class="demo-note">Demo workspace · stored in this browser · opening cash is part of the local seed, not a live bank balance.</p>
+    }
+</div>
+
+@code {
+    private DateOnly selectedMonth;
+    private MonthlySummary? summary;
+    private IReadOnlyList<TrendPoint> trend = [];
+    private IReadOnlyList<CategoryTotal> categories = [];
+    private IReadOnlyList<Transaction> recent = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        Finance.Changed += OnStoreChanged;
+        await Finance.EnsureLoadedAsync();
+        selectedMonth = Finance.DefaultMonth;
+        Refresh();
+    }
+
+    private void OnStoreChanged()
+    {
+        InvokeAsync(() =>
+        {
+            if (!Finance.AvailableMonths.Contains(selectedMonth))
+            {
+                selectedMonth = Finance.DefaultMonth;
+            }
+
+            Refresh();
+            StateHasChanged();
+        });
+    }
+
+    private void OnMonthChanged(DateOnly month)
+    {
+        selectedMonth = month;
+        Refresh();
+    }
+
+    private void Refresh()
+    {
+        if (!Finance.IsReady)
+        {
+            return;
+        }
+
+        summary = Finance.GetSummary(selectedMonth);
+        trend = Finance.GetTrend(selectedMonth);
+        categories = Finance.GetCategoryBreakdown(selectedMonth);
+        recent = Finance.GetRecent(selectedMonth);
+    }
+
+    private static string Tone(decimal? change, bool invert)
+    {
+        if (change is null or 0) return "neutral";
+        var positive = change > 0;
+        if (invert) positive = !positive;
+        return positive ? "positive" : "negative";
+    }
+
+    public void Dispose() => Finance.Changed -= OnStoreChanged;
+}

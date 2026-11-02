@@ -1,0 +1,42 @@
+@using finora_dashboard.Models
+@using finora_dashboard.Services
+
+<section class="panel" aria-labelledby="recent-heading">
+    <header class="panel__header">
+        <div>
+            <h2 id="recent-heading">Recent transactions</h2>
+            <p>Completed demo activity for @MonthLabel</p>
+        </div>
+        <a class="panel__link" href="transactions">View all</a>
+    </header>
+
+    @if (Items.Count == 0)
+    {
+        <p class="empty">No transactions in this month.</p>
+    }
+    else
+    {
+        <ul class="rows">
+            @foreach (var item in Items)
+            {
+                <li>
+                    <span class="avatar" aria-hidden="true">@(item.Description.Length == 0 ? "?" : item.Description[0])</span>
+                    <div>
+                        <p class="merchant">@item.Description</p>
+                        <p class="meta">@item.Category · @item.Date.ToString("d MMM")</p>
+                    </div>
+                    <p class="amount @(item.Type == TransactionType.Income ? "is-in" : "is-out")">
+                        @(item.Type == TransactionType.Income ? "+" : "−")@Money.Sar(item.Amount)
+                    </p>
+                </li>
+            }
+        </ul>
+    }
+</section>
+
+@code {
+    [Parameter, EditorRequired] public IReadOnlyList<Transaction> Items { get; set; } = [];
+    [Parameter, EditorRequired] public DateOnly Month { get; set; }
+
+    private string MonthLabel => Month.ToString("MMMM yyyy");
+}

@@ -1,0 +1,12 @@
+<section class="soon">
+    <p class="eyebrow">@Badge</p>
+    <h1>@Title</h1>
+    <p class="lead">@Description</p>
+    <a class="soon__link" href="">Back to Overview</a>
+</section>
+
+@code {
+    [Parameter, EditorRequired] public string Title { get; set; } = "";
+    [Parameter, EditorRequired] public string Description { get; set; } = "";
+    [Parameter] public string Badge { get; set; } = "Upcoming";
+}
