@@ -1,0 +1,100 @@
+@using finora_dashboard.Models
+@using finora_dashboard.Services
+@inject IJSRuntime JS
+
+@if (Draft is not null)
+{
+    <div class="dialog-backdrop" @onclick="Cancel">
+        <div class="dialog"
+             role="dialog"
+             aria-modal="true"
+             aria-labelledby="budget-dialog-title"
+             tabindex="-1"
+             @ref="panel"
+             @onclick:stopPropagation="true"
+             @onkeydown="OnKeyDown">
+            <h2 id="budget-dialog-title">@(IsEdit ? "Edit budget" : "Add budget")</h2>
+            <p class="hint">Demo envelope for @Draft.Month.ToString("MMMM yyyy"). Saved in this browser only.</p>
+
+            <EditForm Model="Draft" OnValidSubmit="SaveAsync">
+                <DataAnnotationsValidator />
+                <div class="form-grid">
+                    <div class="field">
+                        <label for="budget-category">Category</label>
+                        @if (IsEdit)
+                        {
+                            <input id="budget-category" value="@Draft.Category" readonly />
+                        }
+                        else
+                        {
+                            <InputSelect id="budget-category" @bind-Value="Draft.Category">
+                                <option value="">Select category</option>
+                                @foreach (var category in Categories)
+                                {
+                                    <option value="@category">@category</option>
+                                }
+                            </InputSelect>
+                        }
+                        <ValidationMessage For="() => Draft.Category" />
+                    </div>
+                    <div class="field">
+                        <label for="budget-limit">Monthly limit (SAR)</label>
+                        <InputNumber id="budget-limit" @bind-Value="Draft.Limit" step="0.01" min="0.01" />
+                        <ValidationMessage For="() => Draft.Limit" />
+                    </div>
+                </div>
+                @if (!string.IsNullOrWhiteSpace(Error))
+                {
+                    <p class="validation-message" role="alert">@Error</p>
+                }
+                <div class="dialog-actions">
+                    <button type="button" class="btn btn-ghost" @onclick="Cancel">Cancel</button>
+                    <button type="submit" class="btn btn-primary" disabled="@(!IsEdit && Categories.Count == 0)">
+                        @(IsEdit ? "Save changes" : "Add budget")
+                    </button>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public BudgetDraft? Draft { get; set; }
+    [Parameter] public IReadOnlyList<string> Categories { get; set; } = [];
+    [Parameter] public string? Error { get; set; }
+    [Parameter] public EventCallback OnCancel { get; set; }
+    [Parameter] public EventCallback<BudgetDraft> OnSave { get; set; }
+
+    private ElementReference panel;
+    private bool activateRequested;
+    private bool IsEdit => !string.IsNullOrWhiteSpace(Draft?.Id);
+
+    protected override void OnParametersSet()
+    {
+        if (Draft is not null)
+        {
+            activateRequested = true;
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (activateRequested && Draft is not null)
+        {
+            activateRequested = false;
+            await JS.InvokeVoidAsync("finora.bindFocusTrap", panel);
+            await JS.InvokeVoidAsync("finora.focus", IsEdit ? "budget-limit" : "budget-category");
+        }
+    }
+
+    private Task Cancel() => OnCancel.InvokeAsync();
+    private Task SaveAsync() => Draft is null ? Task.CompletedTask : OnSave.InvokeAsync(Draft);
+
+    private async Task OnKeyDown(KeyboardEventArgs args)
+    {
+        if (args.Key == "Escape")
+        {
+            await Cancel();
+        }
+    }
+}

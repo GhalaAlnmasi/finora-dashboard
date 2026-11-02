@@ -188,14 +188,32 @@ public sealed class TransactionStateService(IJSRuntime js)
         }).ToList();
     }
 
-    public IReadOnlyList<CategoryTotal> GetCategoryBreakdown(DateOnly month)
+    public IReadOnlyDictionary<string, decimal> GetCompletedExpensesByCategory(DateOnly month)
     {
         var start = FirstOfMonth(month);
         var end = start.AddMonths(1);
-        var expenses = Completed()
+
+        return Completed()
             .Where(t => t.Type == TransactionType.Expense && t.Date >= start && t.Date < end)
             .GroupBy(t => t.Category)
-            .Select(g => new { Category = g.Key, Amount = g.Sum(t => t.Amount) })
+            .ToDictionary(g => g.Key, g => g.Sum(t => t.Amount));
+    }
+
+    public decimal GetCompletedExpenseTotal(DateOnly month, string? category = null)
+    {
+        var byCategory = GetCompletedExpensesByCategory(month);
+        if (string.IsNullOrWhiteSpace(category))
+        {
+            return byCategory.Values.Sum();
+        }
+
+        return byCategory.TryGetValue(category, out var amount) ? amount : 0m;
+    }
+
+    public IReadOnlyList<CategoryTotal> GetCategoryBreakdown(DateOnly month)
+    {
+        var expenses = GetCompletedExpensesByCategory(month)
+            .Select(pair => new { Category = pair.Key, Amount = pair.Value })
             .OrderByDescending(g => g.Amount)
             .ToList();
 

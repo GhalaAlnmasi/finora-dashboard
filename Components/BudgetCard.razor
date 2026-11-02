@@ -1,0 +1,65 @@
+@using finora_dashboard.Models
+@using finora_dashboard.Services
+
+<article class="budget-card @ToneClass">
+    <header class="budget-card__head">
+        <span class="swatch" style="background:@FinanceCategories.Color(Progress.Budget.Category)" aria-hidden="true"></span>
+        <h2>@Progress.Budget.Category</h2>
+        <span class="badge">@Badge</span>
+    </header>
+
+    <dl class="figures">
+        <div>
+            <dt>Budget</dt>
+            <dd>@Money.Sar(Progress.Budget.Limit)</dd>
+        </div>
+        <div>
+            <dt>Spent</dt>
+            <dd>@Money.Sar(Progress.Spent)</dd>
+        </div>
+        <div>
+            <dt>@(Progress.Remaining < 0 ? "Over" : "Remaining")</dt>
+            <dd>@Money.Sar(Math.Abs(Progress.Remaining))</dd>
+        </div>
+    </dl>
+
+    <div class="meter"
+         role="meter"
+         aria-valuemin="0"
+         aria-valuemax="100"
+         aria-valuenow="@((int)BudgetMath.MeterPercent(Progress.PercentUsed))"
+         aria-valuetext="@($"{Progress.PercentUsed:0.#} percent of {Progress.Budget.Category} budget used. {Progress.StatusLabel}")"
+         aria-label="@($"{Progress.Budget.Category} budget usage")">
+        <span class="meter__fill" style="width:@BudgetMath.MeterPercent(Progress.PercentUsed).ToString("0.##")%"></span>
+    </div>
+    <p class="status">@Progress.StatusLabel</p>
+
+    <div class="budget-card__actions">
+        <button type="button" class="icon-btn" aria-label="@($"Edit {Progress.Budget.Category} budget")" @onclick="OnEdit">
+            <Icon Name="edit" />
+        </button>
+        <button type="button" class="icon-btn is-danger" aria-label="@($"Delete {Progress.Budget.Category} budget")" @onclick="OnDelete">
+            <Icon Name="trash" />
+        </button>
+    </div>
+</article>
+
+@code {
+    [Parameter, EditorRequired] public BudgetProgress Progress { get; set; } = default!;
+    [Parameter] public EventCallback OnEdit { get; set; }
+    [Parameter] public EventCallback OnDelete { get; set; }
+
+    private string ToneClass => Progress.Health switch
+    {
+        BudgetHealth.Over => "is-over",
+        BudgetHealth.Warning => "is-warn",
+        _ => "is-ok"
+    };
+
+    private string Badge => Progress.Health switch
+    {
+        BudgetHealth.Over => "Over",
+        BudgetHealth.Warning => "Watch",
+        _ => "On track"
+    };
+}
