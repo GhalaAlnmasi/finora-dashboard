@@ -1,0 +1,38 @@
+@using finora_dashboard.Models
+@using finora_dashboard.Services
+
+<section class="panel" aria-labelledby="budget-attn-heading">
+    <header class="panel__header">
+        <div>
+            <h2 id="budget-attn-heading">Budget performance</h2>
+            <p>Categories approaching or past their @Month.ToString("MMMM yyyy") envelope.</p>
+        </div>
+    </header>
+
+    @if (Items.Count == 0)
+    {
+        <p class="empty">@EmptyMessage</p>
+    }
+    else
+    {
+        <ul class="rows">
+            @foreach (var item in Items)
+            {
+                <li class="@Tone(item)">
+                    <span class="name">@item.Budget.Category</span>
+                    <span class="meta">@Money.Sar(item.Spent) of @Money.Sar(item.Budget.Limit)</span>
+                    <span class="pct">@item.PercentUsed.ToString("0.#")%</span>
+                </li>
+            }
+        </ul>
+    }
+</section>
+
+@code {
+    [Parameter, EditorRequired] public IReadOnlyList<BudgetProgress> Items { get; set; } = [];
+    [Parameter, EditorRequired] public DateOnly Month { get; set; }
+    [Parameter] public string EmptyMessage { get; set; } = "All envelopes are on track for this month.";
+
+    private static string Tone(BudgetProgress item) =>
+        item.Health == BudgetHealth.Over ? "is-over" : "is-warn";
+}

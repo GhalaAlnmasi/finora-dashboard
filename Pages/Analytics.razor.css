@@ -1,0 +1,143 @@
+.page {
+    display: grid;
+    gap: 1.15rem;
+    padding-top: 0.75rem;
+}
+
+.page__intro {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    align-items: flex-end;
+}
+
+.eyebrow {
+    color: var(--fn-primary);
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+h1 {
+    margin-top: 0.15rem;
+    font-size: clamp(1.45rem, 2.4vw, 1.9rem);
+    letter-spacing: -0.04em;
+}
+
+.sub {
+    color: var(--fn-muted);
+    font-size: 0.9rem;
+    margin-top: 0.25rem;
+    max-width: 58ch;
+}
+
+.toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    align-items: end;
+    background: var(--fn-card);
+    border: 1px solid var(--fn-border);
+    border-radius: var(--fn-radius);
+    box-shadow: var(--fn-shadow);
+    padding: 1rem 1.1rem;
+}
+
+.toolbar .field {
+    min-width: 180px;
+}
+
+.segment {
+    border: 0;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    gap: 0.35rem;
+    align-items: center;
+}
+
+.segment legend {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--fn-dark);
+    margin-bottom: 0.35rem;
+}
+
+.segment button {
+    border: 1px solid var(--fn-border);
+    background: white;
+    color: var(--fn-dark);
+    border-radius: 999px;
+    padding: 0.45rem 0.85rem;
+    font: inherit;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.segment button.is-on {
+    background: var(--fn-primary);
+    border-color: var(--fn-primary);
+    color: white;
+}
+
+.segment button:focus-visible {
+    outline: none;
+    box-shadow: var(--fn-focus);
+}
+
+.stats {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1rem;
+}
+
+.charts {
+    display: grid;
+    grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr);
+    gap: 1rem;
+}
+
+.empty-card {
+    background: var(--fn-card);
+    border: 1px solid var(--fn-border);
+    border-radius: var(--fn-radius);
+    box-shadow: var(--fn-shadow);
+    padding: 2rem 1.4rem;
+    text-align: center;
+    color: var(--fn-muted);
+}
+
+.empty-card h2 {
+    color: var(--fn-dark);
+    margin-bottom: 0.4rem;
+}
+
+.empty-card .btn {
+    margin-top: 1rem;
+}
+
+@media (max-width: 1100px) {
+    .stats,
+    .charts {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+@media (max-width: 900px) {
+    .page__intro {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .charts {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 560px) {
+    .stats {
+        grid-template-columns: 1fr;
+    }
+}

@@ -5,7 +5,7 @@
     <header class="panel__header">
         <div>
             <h2 id="trend-heading">Income vs expenses</h2>
-            <p>Six-month trend ending @EndLabel</p>
+            <p>@HeaderSub</p>
         </div>
     </header>
 
@@ -59,9 +59,11 @@
 
 @code {
     [Parameter, EditorRequired] public IReadOnlyList<TrendPoint> Points { get; set; } = [];
+    [Parameter] public string? Subtitle { get; set; }
 
     private decimal Max => Math.Max(1, Points.SelectMany(p => new[] { p.Income, p.Expenses }).DefaultIfEmpty().Max());
     private string EndLabel => Points.Count == 0 ? string.Empty : Points[^1].Month.ToString("MMMM yyyy");
+    private string HeaderSub => Subtitle ?? $"Six-month trend ending {EndLabel}";
     private string Description => string.Join(". ", Points.Select(p =>
         $"{p.Month:MMMM}: income {Money.Sar(p.Income)}, expenses {Money.Sar(p.Expenses)}"));
 
