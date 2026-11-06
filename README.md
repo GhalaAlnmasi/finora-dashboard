@@ -100,8 +100,8 @@ Vercel’s default build image does not include the .NET SDK. This repo’s `ver
 1. Push the repository to GitHub.
 2. In Vercel, import the repo.
 3. Confirm:
-   - **Install command** installs .NET 10 into `.dotnet`
-   - **Build command** runs tests and `dotnet publish -c Release -o publish`
+   - **Install command** is `true` (skips npm; the .NET SDK is installed by the build script)
+   - **Build command** is `bash scripts/vercel-build.sh`
    - **Output directory** is `publish/wwwroot`
 4. Deploy. After the live URL exists, open `/`, `/transactions`, `/budgets`, `/analytics`, and `/settings`, then refresh each route.
 
