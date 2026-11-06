@@ -1,0 +1,70 @@
+@using finora_dashboard.Models
+@using finora_dashboard.Services
+
+<section class="panel" aria-labelledby="category-heading">
+    <header class="panel__header">
+        <h2 id="category-heading">Spending by category</h2>
+        <p>Share of expenses this month</p>
+    </header>
+
+    @if (Items.Count == 0)
+    {
+        <p class="empty">No expenses recorded for this month.</p>
+    }
+    else
+    {
+        <div class="layout">
+            <div class="donut-wrap">
+                <svg viewBox="0 0 160 160" class="donut" role="img" aria-labelledby="category-heading">
+                    <circle cx="80" cy="80" r="52" class="track" />
+                    @foreach (var slice in Slices)
+                    {
+                        <circle cx="80" cy="80" r="52"
+                                class="slice"
+                                stroke="@slice.Color"
+                                stroke-dasharray="@slice.DashArray"
+                                stroke-dashoffset="@slice.Offset"
+                                transform="rotate(-90 80 80)" />
+                    }
+                </svg>
+                <div class="center">
+                    <span>Spent</span>
+                    <strong>@Money.CompactSar(Total)</strong>
+                </div>
+            </div>
+            <ul class="cats">
+                @foreach (var item in Items)
+                {
+                    <li>
+                        <span class="dot" style="background:@item.Color"></span>
+                        <span class="name">@item.Category</span>
+                        <span class="amt">@Money.Sar(item.Amount)</span>
+                    </li>
+                }
+            </ul>
+        </div>
+    }
+</section>
+
+@code {
+    [Parameter, EditorRequired] public IReadOnlyList<CategoryTotal> Items { get; set; } = [];
+
+    private decimal Total => Items.Sum(i => i.Amount);
+    private const double Circumference = 2 * Math.PI * 52;
+
+    private IEnumerable<Slice> Slices
+    {
+        get
+        {
+            var offset = 0d;
+            foreach (var item in Items)
+            {
+                var length = (double)item.Share * Circumference;
+                yield return new Slice(item.Color, $"{length:0.###} {Circumference:0.###}", offset.ToString("0.###"));
+                offset -= length;
+            }
+        }
+    }
+
+    private sealed record Slice(string Color, string DashArray, string Offset);
+}

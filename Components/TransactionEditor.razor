@@ -1,0 +1,116 @@
+@using finora_dashboard.Models
+@using finora_dashboard.Services
+@inject IJSRuntime JS
+
+@if (Draft is not null)
+{
+    <div class="dialog-backdrop" @onclick="Cancel">
+        <div class="dialog"
+             role="dialog"
+             aria-modal="true"
+             aria-labelledby="txn-dialog-title"
+             tabindex="-1"
+             @ref="panel"
+             @onclick:stopPropagation="true"
+             @onkeydown="OnKeyDown">
+            <h2 id="txn-dialog-title">@(IsEdit ? "Edit transaction" : "Add transaction")</h2>
+            <p class="hint">Demo data is saved in this browser only. Future dates appear in the ledger but not in Overview totals.</p>
+
+            <EditForm Model="Draft" OnValidSubmit="SaveAsync">
+                <DataAnnotationsValidator />
+                <div class="form-grid">
+                    <div class="field">
+                        <label for="txn-description">Description</label>
+                        <InputText id="txn-description" @bind-Value="Draft.Description" maxlength="80" />
+                        <ValidationMessage For="() => Draft.Description" />
+                    </div>
+                    <div class="field">
+                        <label for="txn-amount">Amount (SAR)</label>
+                        <InputNumber id="txn-amount" @bind-Value="Draft.Amount" step="0.01" min="0.01" />
+                        <ValidationMessage For="() => Draft.Amount" />
+                    </div>
+                    <div class="field">
+                        <label for="txn-type">Type</label>
+                        <InputSelect id="txn-type" @bind-Value="Draft.Type" @bind-Value:after="OnTypeChanged">
+                            <option value="@TransactionType.Expense">Expense</option>
+                            <option value="@TransactionType.Income">Income</option>
+                        </InputSelect>
+                    </div>
+                    <div class="field">
+                        <label for="txn-category">Category</label>
+                        <InputSelect id="txn-category" @bind-Value="Draft.Category">
+                            <option value="">Select category</option>
+                            @foreach (var category in FinanceCategories.For(Draft.Type))
+                            {
+                                <option value="@category">@category</option>
+                            }
+                        </InputSelect>
+                        <ValidationMessage For="() => Draft.Category" />
+                    </div>
+                    <div class="field">
+                        <label for="txn-date">Date</label>
+                        <InputDate id="txn-date" @bind-Value="Draft.Date" />
+                        <ValidationMessage For="() => Draft.Date" />
+                    </div>
+                </div>
+                <div class="dialog-actions">
+                    <button type="button" class="btn btn-ghost" @onclick="Cancel">Cancel</button>
+                    <button type="submit" class="btn btn-primary">@(IsEdit ? "Save changes" : "Add transaction")</button>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public TransactionDraft? Draft { get; set; }
+    [Parameter] public EventCallback OnCancel { get; set; }
+    [Parameter] public EventCallback<TransactionDraft> OnSave { get; set; }
+
+    private ElementReference panel;
+    private bool activateRequested;
+    private bool IsEdit => !string.IsNullOrWhiteSpace(Draft?.Id);
+
+    protected override void OnParametersSet()
+    {
+        if (Draft is not null)
+        {
+            activateRequested = true;
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (activateRequested && Draft is not null)
+        {
+            activateRequested = false;
+            await JS.InvokeVoidAsync("finora.bindFocusTrap", panel);
+            await JS.InvokeVoidAsync("finora.focus", "txn-description");
+        }
+    }
+
+    private void OnTypeChanged()
+    {
+        if (Draft is null)
+        {
+            return;
+        }
+
+        if (!FinanceCategories.For(Draft.Type).Contains(Draft.Category))
+        {
+            Draft.Category = "";
+        }
+    }
+
+    private Task Cancel() => OnCancel.InvokeAsync();
+
+    private Task SaveAsync() => Draft is null ? Task.CompletedTask : OnSave.InvokeAsync(Draft);
+
+    private async Task OnKeyDown(KeyboardEventArgs args)
+    {
+        if (args.Key == "Escape")
+        {
+            await Cancel();
+        }
+    }
+}

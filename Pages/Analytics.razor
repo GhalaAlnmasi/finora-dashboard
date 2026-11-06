@@ -1,0 +1,209 @@
+@page "/analytics"
+@implements IDisposable
+@inject TransactionStateService Transactions
+@inject BudgetStateService BudgetStore
+
+<PageTitle>Analytics · FINORA</PageTitle>
+
+<div class="page">
+    <div class="page__intro">
+        <div>
+            <p class="eyebrow">Analytics</p>
+            <h1>Cash-flow insights</h1>
+            <p class="sub">Completed demo activity only. Scheduled transactions are excluded. Figures are stored locally in this browser.</p>
+        </div>
+        @if (Transactions.IsReady)
+        {
+            <MonthSelector Months="Transactions.AvailableMonths" Selected="selectedMonth" SelectedChanged="OnMonthChanged" />
+        }
+    </div>
+
+    @if (!Transactions.IsReady || !BudgetStore.IsReady)
+    {
+        <p class="demo-note">Loading local demo data…</p>
+    }
+    else
+    {
+        <section class="toolbar" aria-label="Analytics filters">
+            <fieldset class="segment">
+                <legend>Trend range</legend>
+                <button type="button" class="@(lookback == 6 ? "is-on" : null)" aria-pressed="@(lookback == 6)" @onclick="() => SetLookback(6)">6 months</button>
+                <button type="button" class="@(lookback == 12 ? "is-on" : null)" aria-pressed="@(lookback == 12)" @onclick="() => SetLookback(12)">12 months</button>
+            </fieldset>
+            <div class="field">
+                <label for="analytics-category">Expense category</label>
+                <select id="analytics-category" @bind="categoryFilter" @bind:after="Refresh">
+                    <option value="">All categories</option>
+                    @foreach (var category in FinanceCategories.Expense)
+                    {
+                        <option value="@category">@category</option>
+                    }
+                </select>
+            </div>
+        </section>
+
+        <p class="demo-note">@RangeLabel · vs @Dates.FormatMonth(previousMonth)</p>
+
+        @if (!hasMonthActivity && string.IsNullOrEmpty(categoryFilter))
+        {
+            <div class="empty-card">
+                <h2>No completed activity in @Dates.FormatMonth(selectedMonth)</h2>
+                <p>Add transactions dated on or before today, or choose another month.</p>
+                <a class="btn btn-primary" href="transactions">Open transactions</a>
+            </div>
+        }
+        else
+        {
+            <section class="stats" aria-label="Monthly summary">
+                <StatCard Label="Total income"
+                          Value="@Money.Sar(income)"
+                          IconName="income"
+                          Change="@Money.Percent(incomeChange)"
+                          Tone="@Tone(incomeChange, invert: false)" />
+                <StatCard Label="Total expenses"
+                          Value="@Money.Sar(expenses)"
+                          IconName="expense"
+                          Change="@Money.Percent(expenseChange)"
+                          Tone="@Tone(expenseChange, invert: true)" />
+                <StatCard Label="Net savings"
+                          Value="@Money.Sar(savings)"
+                          IconName="savings"
+                          Change="@Money.Percent(savingsChange)"
+                          Tone="@Tone(savingsChange, invert: false)" />
+                <StatCard Label="Savings rate"
+                          Value="@($"{savingsRate:0.0}%")"
+                          IconName="analytics"
+                          Change="@Money.Percent(rateChange)"
+                          Tone="@Tone(rateChange, invert: false)" />
+            </section>
+
+            <div class="charts">
+                <IncomeExpenseChart Points="trend" Subtitle="@($"{lookback}-month trend ending {Dates.FormatMonth(selectedMonth)}")" />
+                <CategoryDonutChart Items="breakdown" />
+            </div>
+
+            <div class="charts">
+                <ValueTrendChart Title="Spending trend"
+                                 Subtitle="Completed expenses in the selected range"
+                                 Points="trend"
+                                 Selector="point => point.Expenses" />
+                <ValueTrendChart Title="Savings trend"
+                                 Subtitle="Income minus expenses by month"
+                                 Points="trend"
+                                 Selector="point => point.Income - point.Expenses" />
+            </div>
+
+            <BudgetAttentionList Items="attention" Month="selectedMonth" EmptyMessage="@BudgetEmpty" />
+        }
+    }
+</div>
+
+@code {
+    private DateOnly selectedMonth;
+    private DateOnly previousMonth;
+    private int lookback = 6;
+    private string categoryFilter = "";
+    private decimal income;
+    private decimal expenses;
+    private decimal savings;
+    private decimal savingsRate;
+    private decimal? incomeChange;
+    private decimal? expenseChange;
+    private decimal? savingsChange;
+    private decimal? rateChange;
+    private bool hasMonthActivity;
+    private IReadOnlyList<TrendPoint> trend = [];
+    private IReadOnlyList<CategoryTotal> breakdown = [];
+    private IReadOnlyList<BudgetProgress> attention = [];
+
+    private string? CategoryOrNull => string.IsNullOrWhiteSpace(categoryFilter) ? null : categoryFilter;
+    private string RangeLabel => $"{Dates.FormatMonthShort(AnalyticsMath.FirstOfMonth(selectedMonth).AddMonths(1 - lookback))}–{Dates.FormatMonthShort(selectedMonth)}";
+    private string BudgetEmpty => string.IsNullOrEmpty(categoryFilter)
+        ? "All envelopes are on track, or no budgets exist for this month."
+        : $"No watch, at-limit, or over-budget state for {categoryFilter} this month.";
+
+    protected override async Task OnInitializedAsync()
+    {
+        Transactions.Changed += OnChanged;
+        BudgetStore.Changed += OnChanged;
+        await Transactions.EnsureLoadedAsync();
+        await BudgetStore.EnsureLoadedAsync();
+        selectedMonth = Transactions.DefaultMonth;
+        Refresh();
+    }
+
+    private void OnChanged()
+    {
+        InvokeAsync(() =>
+        {
+            if (!Transactions.AvailableMonths.Contains(selectedMonth) && Transactions.AvailableMonths.Count > 0)
+            {
+                selectedMonth = Transactions.DefaultMonth;
+            }
+
+            Refresh();
+            StateHasChanged();
+        });
+    }
+
+    private void OnMonthChanged(DateOnly month)
+    {
+        selectedMonth = month;
+        Refresh();
+    }
+
+    private void SetLookback(int months)
+    {
+        lookback = months;
+        Refresh();
+    }
+
+    private void Refresh()
+    {
+        if (!Transactions.IsReady)
+        {
+            return;
+        }
+
+        var today = Transactions.Today;
+        var monthStart = AnalyticsMath.FirstOfMonth(selectedMonth);
+        previousMonth = monthStart.AddMonths(-1);
+        var monthItems = AnalyticsMath.CompletedInRange(Transactions.Transactions, monthStart, monthStart.AddMonths(1), today);
+        var previousItems = AnalyticsMath.CompletedInRange(Transactions.Transactions, previousMonth, monthStart, today);
+
+        var current = AnalyticsMath.Totals(monthItems, CategoryOrNull);
+        var previous = AnalyticsMath.Totals(previousItems, CategoryOrNull);
+        income = current.Income;
+        expenses = current.Expenses;
+        savings = current.Savings;
+        savingsRate = AnalyticsMath.SavingsRate(income, savings);
+        incomeChange = AnalyticsMath.ChangePercent(previous.Income, income);
+        expenseChange = AnalyticsMath.ChangePercent(previous.Expenses, expenses);
+        savingsChange = AnalyticsMath.ChangePercent(previous.Savings, savings);
+        rateChange = AnalyticsMath.ChangePercent(AnalyticsMath.SavingsRate(previous.Income, previous.Savings), savingsRate);
+        hasMonthActivity = monthItems.Count > 0;
+
+        trend = AnalyticsMath.MonthlyTrend(Transactions.Transactions, selectedMonth, lookback, today, CategoryOrNull);
+        breakdown = AnalyticsMath.ExpenseBreakdown(monthItems, CategoryOrNull);
+
+        attention = BudgetStore.GetMonthProgress(selectedMonth)
+            .Where(item => item.Health != BudgetHealth.OnTrack)
+            .Where(item => CategoryOrNull is null || item.Budget.Category == CategoryOrNull)
+            .OrderByDescending(item => item.PercentUsed)
+            .ToList();
+    }
+
+    private static string Tone(decimal? change, bool invert)
+    {
+        if (change is null or 0) return "neutral";
+        var positive = change > 0;
+        if (invert) positive = !positive;
+        return positive ? "positive" : "negative";
+    }
+
+    public void Dispose()
+    {
+        Transactions.Changed -= OnChanged;
+        BudgetStore.Changed -= OnChanged;
+    }
+}

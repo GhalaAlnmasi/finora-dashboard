@@ -1,0 +1,80 @@
+.panel {
+    background: var(--fn-card);
+    border: 1px solid var(--fn-border);
+    border-radius: var(--fn-radius);
+    box-shadow: var(--fn-shadow);
+    padding: 1.2rem 1.25rem 1rem;
+    min-width: 0;
+}
+
+.panel__header h2 {
+    font-size: 1.05rem;
+    letter-spacing: -0.02em;
+}
+
+.panel__header p {
+    color: var(--fn-muted);
+    font-size: 0.82rem;
+    margin-top: 0.15rem;
+}
+
+.chart {
+    margin-top: 0.85rem;
+}
+
+.plot {
+    display: grid;
+    gap: 0.45rem;
+    height: 180px;
+    padding: 0.4rem 0.2rem 0;
+    border-bottom: 1px solid var(--fn-border);
+    background-image: repeating-linear-gradient(
+        to top,
+        transparent,
+        transparent 35px,
+        var(--fn-border) 35px,
+        var(--fn-border) 36px
+    );
+}
+
+.col {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    height: 100%;
+}
+
+.bars {
+    flex: 1;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    min-height: 0;
+}
+
+.bar {
+    width: 12px;
+    max-width: 70%;
+    border-radius: 7px 7px 4px 4px;
+}
+
+.is-pos {
+    background: var(--fn-primary);
+}
+
+.is-neg {
+    background: var(--fn-danger);
+}
+
+.tick {
+    display: block;
+    text-align: center;
+    color: var(--fn-muted);
+    font-size: 0.68rem;
+    padding: 0.4rem 0 0;
+}
+
+.empty {
+    color: var(--fn-muted);
+    padding: 1.5rem 0;
+}

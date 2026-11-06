@@ -1,0 +1,341 @@
+@page "/transactions"
+@implements IDisposable
+@inject TransactionStateService Store
+
+<PageTitle>Transactions · FINORA</PageTitle>
+
+<div class="page">
+    <div class="page__intro">
+        <div>
+            <p class="eyebrow">Transactions</p>
+            <h1>Ledger</h1>
+            <p class="sub">Search, filter, and manage demo activity. Changes are stored locally in this browser and drive Overview totals.</p>
+        </div>
+        <button type="button" class="btn btn-primary" @onclick="OpenCreate">
+            <Icon Name="plus" />
+            Add transaction
+        </button>
+    </div>
+
+    <section class="toolbar" aria-label="Transaction filters">
+        <div class="field search">
+            <label for="txn-search">Search</label>
+            <div class="search__box">
+                <Icon Name="search" />
+                <input id="txn-search"
+                       type="search"
+                       placeholder="Search by description"
+                       @bind="search"
+                       @bind:event="oninput"
+                       @bind:after="ApplyFilters" />
+            </div>
+        </div>
+        <div class="field">
+            <label for="txn-filter-type">Type</label>
+            <select id="txn-filter-type" @bind="typeFilter" @bind:after="ApplyFilters">
+                <option value="">All types</option>
+                <option value="Income">Income</option>
+                <option value="Expense">Expense</option>
+            </select>
+        </div>
+        <div class="field">
+            <label for="txn-filter-category">Category</label>
+            <select id="txn-filter-category" @bind="categoryFilter" @bind:after="ApplyFilters">
+                <option value="">All categories</option>
+                @foreach (var category in FinanceCategories.All)
+                {
+                    <option value="@category">@category</option>
+                }
+            </select>
+        </div>
+        <div class="field">
+            <label for="txn-from">From</label>
+            <input id="txn-from" type="date" @bind="fromDate" @bind:after="ApplyFilters" />
+        </div>
+        <div class="field">
+            <label for="txn-to">To</label>
+            <input id="txn-to" type="date" @bind="toDate" @bind:after="ApplyFilters" />
+        </div>
+        @if (HasActiveFilters)
+        {
+            <button type="button" class="btn btn-ghost clear" @onclick="ClearFilters">Clear filters</button>
+        }
+    </section>
+
+    <p class="demo-note" aria-live="polite">
+        Showing @visible.Count of @Store.Transactions.Count demo transactions.
+        Future-dated items are labeled Scheduled and are excluded from Overview.
+    </p>
+
+    @if (!Store.IsReady)
+    {
+        <p class="empty-card">Loading local demo data…</p>
+    }
+    else if (Store.Transactions.Count == 0)
+    {
+        <div class="empty-card">
+            <h2>No transactions yet</h2>
+            <p>Add the first demo entry to populate this ledger and the Overview dashboard.</p>
+            <button type="button" class="btn btn-primary" @onclick="OpenCreate">Add transaction</button>
+        </div>
+    }
+    else if (visible.Count == 0)
+    {
+        <div class="empty-card">
+            <h2>No matching transactions</h2>
+            <p>Try a different search or clear the current filters.</p>
+            <button type="button" class="btn btn-ghost" @onclick="ClearFilters">Clear filters</button>
+        </div>
+    }
+    else
+    {
+        <div class="table-wrap">
+            <table class="ledger">
+                <caption class="visually-hidden">Transactions</caption>
+                <thead>
+                    <tr>
+                        <th>
+                            <button type="button" class="sort" @onclick='() => SortBy("date")'>
+                                Date @SortMark("date")
+                            </button>
+                        </th>
+                        <th>Description</th>
+                        <th>Category</th>
+                        <th>Type</th>
+                        <th>
+                            <button type="button" class="sort" @onclick='() => SortBy("amount")'>
+                                Amount @SortMark("amount")
+                            </button>
+                        </th>
+                        <th><span class="visually-hidden">Actions</span></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in visible)
+                    {
+                        <tr>
+                            <td>
+                                <time datetime="@item.Date.ToString("yyyy-MM-dd")">@Dates.Format(item.Date)</time>
+                                @if (!Store.IsCompleted(item))
+                                {
+                                    <span class="pill">Scheduled</span>
+                                }
+                            </td>
+                            <td>@item.Description</td>
+                            <td>@item.Category</td>
+                            <td>@item.Type</td>
+                            <td class="amount @(item.Type == TransactionType.Income ? "is-in" : "is-out")">
+                                @(item.Type == TransactionType.Income ? "+" : "−")@Money.Sar(item.Amount)
+                            </td>
+                            <td class="actions">
+                                <button type="button" class="icon-btn" aria-label="@($"Edit {item.Description}")" @onclick="() => OpenEdit(item)">
+                                    <Icon Name="edit" />
+                                </button>
+                                <button type="button" class="icon-btn is-danger" aria-label="@($"Delete {item.Description}")" @onclick="() => AskDelete(item)">
+                                    <Icon Name="trash" />
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <ul class="cards">
+            @foreach (var item in visible)
+            {
+                <li>
+                    <div class="cards__top">
+                        <div>
+                            <p class="cards__title">@item.Description</p>
+                            <p class="cards__meta">@item.Category · @Dates.Format(item.Date)</p>
+                        </div>
+                        <p class="amount @(item.Type == TransactionType.Income ? "is-in" : "is-out")">
+                            @(item.Type == TransactionType.Income ? "+" : "−")@Money.Sar(item.Amount)
+                        </p>
+                    </div>
+                    <div class="cards__foot">
+                        <span class="type">@item.Type</span>
+                        @if (!Store.IsCompleted(item))
+                        {
+                            <span class="pill">Scheduled</span>
+                        }
+                        <span class="cards__actions">
+                            <button type="button" class="icon-btn" aria-label="@($"Edit {item.Description}")" @onclick="() => OpenEdit(item)">
+                                <Icon Name="edit" />
+                            </button>
+                            <button type="button" class="icon-btn is-danger" aria-label="@($"Delete {item.Description}")" @onclick="() => AskDelete(item)">
+                                <Icon Name="trash" />
+                            </button>
+                        </span>
+                    </div>
+                </li>
+            }
+        </ul>
+    }
+</div>
+
+<TransactionEditor Draft="draft" OnCancel="CloseEditor" OnSave="SaveEditorAsync" />
+<ConfirmDialog Open="pendingDelete is not null"
+               Title="Delete transaction"
+               Message="@DeleteMessage"
+               ConfirmLabel="Delete"
+               OnCancel="CancelDelete"
+               OnConfirm="ConfirmDeleteAsync" />
+
+@code {
+    private string search = "";
+    private string typeFilter = "";
+    private string categoryFilter = "";
+    private DateOnly? fromDate;
+    private DateOnly? toDate;
+    private string sortColumn = "date";
+    private bool sortAscending;
+    private IReadOnlyList<Transaction> visible = [];
+    private TransactionDraft? draft;
+    private Transaction? pendingDelete;
+
+    private bool HasActiveFilters =>
+        !string.IsNullOrWhiteSpace(search)
+        || !string.IsNullOrWhiteSpace(typeFilter)
+        || !string.IsNullOrWhiteSpace(categoryFilter)
+        || fromDate is not null
+        || toDate is not null;
+
+    private string DeleteMessage => pendingDelete is null
+        ? ""
+        : $"Delete “{pendingDelete.Description}” for {Money.Sar(pendingDelete.Amount)}? This demo record will be removed from local storage.";
+
+    protected override async Task OnInitializedAsync()
+    {
+        Store.Changed += OnStoreChanged;
+        await Store.EnsureLoadedAsync();
+        ApplyFilters();
+    }
+
+    private void OnStoreChanged()
+    {
+        InvokeAsync(() =>
+        {
+            ApplyFilters();
+            StateHasChanged();
+        });
+    }
+
+    private void ApplyFilters()
+    {
+        IEnumerable<Transaction> query = Store.Transactions;
+
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            query = query.Where(t => t.Description.Contains(search, StringComparison.OrdinalIgnoreCase));
+        }
+
+        if (typeFilter == nameof(TransactionType.Income))
+        {
+            query = query.Where(t => t.Type == TransactionType.Income);
+        }
+        else if (typeFilter == nameof(TransactionType.Expense))
+        {
+            query = query.Where(t => t.Type == TransactionType.Expense);
+        }
+
+        if (!string.IsNullOrWhiteSpace(categoryFilter))
+        {
+            query = query.Where(t => t.Category == categoryFilter);
+        }
+
+        if (fromDate is not null)
+        {
+            query = query.Where(t => t.Date >= fromDate.Value);
+        }
+
+        if (toDate is not null)
+        {
+            query = query.Where(t => t.Date <= toDate.Value);
+        }
+
+        query = sortColumn == "amount"
+            ? (sortAscending ? query.OrderBy(t => t.Amount).ThenBy(t => t.Date) : query.OrderByDescending(t => t.Amount).ThenByDescending(t => t.Date))
+            : (sortAscending ? query.OrderBy(t => t.Date).ThenBy(t => t.Description) : query.OrderByDescending(t => t.Date).ThenByDescending(t => t.Description));
+
+        visible = query.ToList();
+    }
+
+    private void SortBy(string column)
+    {
+        if (sortColumn == column)
+        {
+            sortAscending = !sortAscending;
+        }
+        else
+        {
+            sortColumn = column;
+            sortAscending = column != "date";
+        }
+
+        ApplyFilters();
+    }
+
+    private string SortMark(string column)
+    {
+        if (sortColumn != column)
+        {
+            return "";
+        }
+
+        return sortAscending ? "↑" : "↓";
+    }
+
+    private void ClearFilters()
+    {
+        search = "";
+        typeFilter = "";
+        categoryFilter = "";
+        fromDate = null;
+        toDate = null;
+        ApplyFilters();
+    }
+
+    private void OpenCreate()
+    {
+        draft = TransactionDraft.NewDraft(Store.Today);
+    }
+
+    private void OpenEdit(Transaction transaction)
+    {
+        draft = TransactionDraft.From(transaction);
+    }
+
+    private void CloseEditor() => draft = null;
+
+    private async Task SaveEditorAsync(TransactionDraft value)
+    {
+        if (string.IsNullOrWhiteSpace(value.Id))
+        {
+            ClearFilters();
+            await Store.AddAsync(value);
+        }
+        else
+        {
+            await Store.UpdateAsync(value);
+        }
+
+        draft = null;
+    }
+
+    private void AskDelete(Transaction transaction) => pendingDelete = transaction;
+    private void CancelDelete() => pendingDelete = null;
+
+    private async Task ConfirmDeleteAsync()
+    {
+        if (pendingDelete is not null)
+        {
+            await Store.DeleteAsync(pendingDelete.Id);
+        }
+
+        pendingDelete = null;
+    }
+
+    public void Dispose() => Store.Changed -= OnStoreChanged;
+}

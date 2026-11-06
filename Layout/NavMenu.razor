@@ -1,39 +1,57 @@
-﻿<div class="top-row ps-3 navbar navbar-dark">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="">finora-dashboard</a>
-        <button title="Navigation menu" class="navbar-toggler" @onclick="ToggleNavMenu">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-    </div>
+﻿@using finora_dashboard.Models
+
+<div class="nav-root">
+<div class="brand">
+    <a class="brand__link" href="" @onclick="OnNavigate" @onclick:preventDefault="false">
+        <span class="brand__mark" aria-hidden="true">
+            <svg viewBox="0 0 32 32" fill="none">
+                <rect width="32" height="32" rx="10" fill="#C8E8DA" />
+                <path d="M10 23V9h12M10 16h8" stroke="#166B57" stroke-width="2.2" stroke-linecap="round" />
+            </svg>
+        </span>
+        <span class="brand__word">
+            FINORA
+            <small>Personal finance</small>
+        </span>
+    </a>
+    <button type="button" class="brand__close" aria-label="Close navigation" @onclick="OnNavigate">
+        <Icon Name="close" />
+    </button>
 </div>
 
-<div class="@NavMenuCssClass nav-scrollable" @onclick="ToggleNavMenu">
-    <nav class="nav flex-column">
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="counter">
-                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Counter
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="weather">
-                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Weather
-            </NavLink>
-        </div>
-    </nav>
+<nav class="menu" aria-label="Primary">
+    <NavLink class="menu__link" href="" Match="NavLinkMatch.All" @onclick="OnNavigate">
+        <Icon Name="overview" />
+        Overview
+    </NavLink>
+    <NavLink class="menu__link" href="transactions" @onclick="OnNavigate">
+        <Icon Name="transactions" />
+        Transactions
+    </NavLink>
+    <NavLink class="menu__link" href="budgets" @onclick="OnNavigate">
+        <Icon Name="budgets" />
+        Budgets
+    </NavLink>
+    <NavLink class="menu__link" href="analytics" @onclick="OnNavigate">
+        <Icon Name="analytics" />
+        Analytics
+    </NavLink>
+    <NavLink class="menu__link" href="settings" @onclick="OnNavigate">
+        <Icon Name="settings" />
+        Settings
+    </NavLink>
+</nav>
+
+<div class="menu__profile">
+    <span class="menu__avatar" aria-hidden="true">@Profile.Initials</span>
+    <div>
+        <p>@Profile.FullName</p>
+        <small>Demo · local data</small>
+    </div>
+</div>
 </div>
 
 @code {
-    private bool collapseNavMenu = true;
-
-    private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
-
-    private void ToggleNavMenu()
-    {
-        collapseNavMenu = !collapseNavMenu;
-    }
+    [Parameter, EditorRequired] public DemoProfile Profile { get; set; } = default!;
+    [Parameter] public EventCallback OnNavigate { get; set; }
 }

@@ -1,0 +1,57 @@
+.month-selector {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    background: var(--fn-card);
+    border: 1px solid var(--fn-border);
+    border-radius: 999px;
+    padding: 0.2rem;
+    box-shadow: var(--fn-shadow);
+}
+
+.month-selector__label {
+    min-width: 9.5rem;
+    text-align: center;
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--fn-dark);
+}
+
+.month-selector__btn {
+    width: 34px;
+    height: 34px;
+    border: 0;
+    background: transparent;
+    color: var(--fn-dark);
+    border-radius: 999px;
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+}
+
+.month-selector__btn:hover:not(:disabled) {
+    background: var(--fn-primary-soft);
+    color: var(--fn-primary);
+}
+
+.month-selector__btn:focus-visible {
+    outline: none;
+    box-shadow: var(--fn-focus);
+}
+
+.month-selector__btn:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+}
+
+.month-selector__btn ::deep svg {
+    width: 16px;
+    height: 16px;
+}
+
+@media (max-width: 480px) {
+    .month-selector__label {
+        min-width: 7.25rem;
+        font-size: 0.8rem;
+    }
+}

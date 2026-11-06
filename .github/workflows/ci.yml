@@ -1,0 +1,25 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+jobs:
+  build-test-publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+      - name: Test
+        run: dotnet test finora-dashboard.Tests/finora-dashboard.Tests.csproj --configuration Release
+      - name: Publish
+        run: dotnet publish finora-dashboard.csproj -c Release -o publish
+      - name: Check static output
+        run: |
+          test -f publish/wwwroot/index.html
+          test -d publish/wwwroot/_framework
+          test -f publish/wwwroot/css/app.css
+          test -f publish/wwwroot/js/finora.js

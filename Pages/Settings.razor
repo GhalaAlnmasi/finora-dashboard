@@ -1,0 +1,312 @@
+@page "/settings"
+@implements IDisposable
+@inject PreferencesService Preferences
+@inject TransactionStateService Finance
+@inject BudgetStateService BudgetStore
+@inject IJSRuntime JS
+
+<PageTitle>Settings · FINORA</PageTitle>
+
+<div class="page">
+    <div class="page__intro">
+        <div>
+            <p class="eyebrow">Settings</p>
+            <h1>Preferences</h1>
+            <p class="sub">Workspace options for this browser demo. Nothing here creates an account or connects to a bank.</p>
+        </div>
+        <div class="preview-avatar" aria-hidden="true">@Preferences.Profile.Initials</div>
+    </div>
+
+    @if (!string.IsNullOrEmpty(notice))
+    {
+        <p class="banner @noticeTone" role="status">@notice</p>
+    }
+
+    @if (Preferences.LastWriteFailed || Finance.LastWriteFailed || BudgetStore.LastWriteFailed)
+    {
+        <p class="banner is-warn" role="alert">Browser storage is full or blocked. Changes are kept in this session only and may be lost when you close the tab.</p>
+    }
+
+    <section class="card" aria-labelledby="profile-heading">
+        <header>
+            <h2 id="profile-heading">Profile</h2>
+            <p>A display name for the header and sidebar. This is not a login.</p>
+        </header>
+        <div class="profile-row">
+            <span class="preview-avatar" aria-hidden="true">@DemoProfile.InitialsFrom(displayName)</span>
+            <EditForm Model="this" OnValidSubmit="SaveProfile" class="form">
+                <DataAnnotationsValidator />
+                <div class="field">
+                    <label for="display-name">Display name</label>
+                    <InputText id="display-name" @bind-Value="displayName" maxlength="80" />
+                    <ValidationMessage For="() => displayName" />
+                </div>
+                <div class="field">
+                    <label for="city">City</label>
+                    <InputText id="city" @bind-Value="city" maxlength="80" />
+                    <ValidationMessage For="() => city" />
+                </div>
+                <button type="submit" class="btn btn-primary">Save profile</button>
+            </EditForm>
+        </div>
+    </section>
+
+    <section class="card" aria-labelledby="appearance-heading">
+        <header>
+            <h2 id="appearance-heading">Appearance</h2>
+            <p>Theme is stored in this browser and applied on every page.</p>
+        </header>
+        <fieldset class="segment">
+            <legend class="visually-hidden">Theme</legend>
+            <button type="button" class="@(Preferences.Theme == AppTheme.Light ? "is-on" : null)" aria-pressed="@(Preferences.Theme == AppTheme.Light)" @onclick="() => SetTheme(AppTheme.Light)">Light</button>
+            <button type="button" class="@(Preferences.Theme == AppTheme.Dark ? "is-on" : null)" aria-pressed="@(Preferences.Theme == AppTheme.Dark)" @onclick="() => SetTheme(AppTheme.Dark)">Dark</button>
+        </fieldset>
+    </section>
+
+    <section class="card" aria-labelledby="display-heading">
+        <header>
+            <h2 id="display-heading">Display</h2>
+            <p>Formatting only. Currency stays Saudi riyal (SAR). No conversion is applied.</p>
+        </header>
+        <div class="stack">
+            <fieldset class="segment">
+                <legend>SAR format</legend>
+                <button type="button" class="@(Preferences.SarFormat == SarDisplayFormat.CodePrefix ? "is-on" : null)" aria-pressed="@(Preferences.SarFormat == SarDisplayFormat.CodePrefix)" @onclick="() => SetSar(SarDisplayFormat.CodePrefix)">SAR 1,234.56</button>
+                <button type="button" class="@(Preferences.SarFormat == SarDisplayFormat.CodeSuffix ? "is-on" : null)" aria-pressed="@(Preferences.SarFormat == SarDisplayFormat.CodeSuffix)" @onclick="() => SetSar(SarDisplayFormat.CodeSuffix)">1,234.56 SAR</button>
+                <button type="button" class="@(Preferences.SarFormat == SarDisplayFormat.UngroupedPrefix ? "is-on" : null)" aria-pressed="@(Preferences.SarFormat == SarDisplayFormat.UngroupedPrefix)" @onclick="() => SetSar(SarDisplayFormat.UngroupedPrefix)">SAR 1234.56</button>
+            </fieldset>
+            <fieldset class="segment">
+                <legend>Date format</legend>
+                <button type="button" class="@(Preferences.DateFormat == DateDisplayFormat.Medium ? "is-on" : null)" aria-pressed="@(Preferences.DateFormat == DateDisplayFormat.Medium)" @onclick="() => SetDate(DateDisplayFormat.Medium)">2 Nov 2026</button>
+                <button type="button" class="@(Preferences.DateFormat == DateDisplayFormat.Long ? "is-on" : null)" aria-pressed="@(Preferences.DateFormat == DateDisplayFormat.Long)" @onclick="() => SetDate(DateDisplayFormat.Long)">2 November 2026</button>
+                <button type="button" class="@(Preferences.DateFormat == DateDisplayFormat.Iso ? "is-on" : null)" aria-pressed="@(Preferences.DateFormat == DateDisplayFormat.Iso)" @onclick="() => SetDate(DateDisplayFormat.Iso)">2026-11-02</button>
+            </fieldset>
+            <p class="hint">Preview: @Money.Sar(12345.67m) · @Dates.Format(new DateOnly(2026, 11, 2))</p>
+        </div>
+    </section>
+
+    <section class="card" aria-labelledby="data-heading">
+        <header>
+            <h2 id="data-heading">Data management</h2>
+            <p>Export a versioned JSON backup, or replace local demo data from a previous FINORA file.</p>
+        </header>
+        <div class="actions">
+            <button type="button" class="btn btn-primary" @onclick="ExportAsync">Export JSON backup</button>
+            <label class="btn btn-ghost file-btn">
+                Import backup
+                <InputFile OnChange="OnImportSelected" accept="application/json,.json" />
+            </label>
+        </div>
+        <p class="hint">Imports are validated before anything is replaced. HTML in a file is treated as plain text, never executed.</p>
+    </section>
+
+    <section class="card" aria-labelledby="reset-heading">
+        <header>
+            <h2 id="reset-heading">Reset demo data</h2>
+            <p>Restore the original sample transactions and budgets. Profile and appearance stay as they are.</p>
+        </header>
+        <button type="button" class="btn btn-danger" @onclick="AskReset">Reset transactions and budgets</button>
+    </section>
+
+    <section class="card" aria-labelledby="privacy-heading">
+        <header>
+            <h2 id="privacy-heading">Privacy and about</h2>
+        </header>
+        <ul class="facts">
+            <li>FINORA stores demo financial data in this browser’s local storage. There is no server database.</li>
+            <li>Clearing site data, using private browsing, or blocking storage can remove your demo records.</li>
+            <li>FINORA has no real bank connection, no live accounts, and no payment processing.</li>
+            <li>Version @PreferencesService.AppVersion · portfolio demonstration, not a production finance product. The sample profile starts as @DemoPersona.DisplayName until you change it. Saved names already in this browser are not overwritten.</li>
+        </ul>
+    </section>
+</div>
+
+<ConfirmDialog Open="pending is not null"
+               Title="@ConfirmTitle"
+               Message="@ConfirmMessage"
+               ConfirmLabel="@ConfirmLabel"
+               OnCancel="CancelPending"
+               OnConfirm="ConfirmPendingAsync" />
+
+@code {
+    [Required, MinLength(2), MaxLength(80)]
+    public string displayName { get; set; } = "";
+
+    [Required, MinLength(2), MaxLength(80)]
+    public string city { get; set; } = "";
+
+    private string notice = "";
+    private string noticeTone = "is-ok";
+    private PendingAction? pending;
+    private FinoraBackupDocument? pendingBackup;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Preferences.Changed += OnChanged;
+        await Preferences.EnsureLoadedAsync();
+        await Finance.EnsureLoadedAsync();
+        await BudgetStore.EnsureLoadedAsync();
+        displayName = Preferences.Profile.DisplayName;
+        city = Preferences.Profile.City;
+    }
+
+    private void OnChanged() => InvokeAsync(StateHasChanged);
+
+    private async Task SaveProfile()
+    {
+        var ok = await Preferences.UpdateProfileAsync(displayName, city);
+        Flash(ok ? "Display name saved for this browser." : "Profile updated in this session, but browser storage could not be written.", ok);
+    }
+
+    private async Task SetTheme(AppTheme theme)
+    {
+        var ok = await Preferences.UpdateThemeAsync(theme);
+        Flash(ok ? $"{theme} mode saved." : "Theme applied for this session, but could not be stored.", ok);
+    }
+
+    private async Task SetSar(SarDisplayFormat format)
+    {
+        var ok = await Preferences.UpdateDisplayAsync(format, Preferences.DateFormat);
+        Flash(ok ? "SAR format saved. Amounts stay in Saudi riyal." : "Format applied for this session, but could not be stored.", ok);
+    }
+
+    private async Task SetDate(DateDisplayFormat format)
+    {
+        var ok = await Preferences.UpdateDisplayAsync(Preferences.SarFormat, format);
+        Flash(ok ? "Date format saved." : "Date format applied for this session, but could not be stored.", ok);
+    }
+
+    private async Task ExportAsync()
+    {
+        var backup = new FinoraBackupDocument
+        {
+            Format = FinoraBackupDocument.FormatName,
+            Version = FinoraBackupDocument.CurrentVersion,
+            ExportedAt = DateTimeOffset.UtcNow,
+            AppVersion = PreferencesService.AppVersion,
+            Finance = Finance.ExportDocument(),
+            Budgets = BudgetStore.ExportDocument(),
+            Preferences = Preferences.ExportDocument()
+        };
+
+        var json = System.Text.Json.JsonSerializer.Serialize(backup, FinoraJson.PrettyOptions);
+        var stamp = DateTime.UtcNow.ToString("yyyyMMdd-HHmmss");
+        await JS.InvokeVoidAsync("finora.downloadText", $"finora-backup-{stamp}.json", json);
+        Flash("Backup downloaded. Keep it as a JSON file.", true);
+    }
+
+    private async Task OnImportSelected(InputFileChangeEventArgs args)
+    {
+        notice = "";
+        pendingBackup = null;
+
+        if (args.FileCount != 1)
+        {
+            Flash("Choose a single FINORA JSON backup.", false);
+            return;
+        }
+
+        string json;
+        try
+        {
+            await using var stream = args.File.OpenReadStream(maxAllowedSize: 2_000_000);
+            using var reader = new StreamReader(stream);
+            json = await reader.ReadToEndAsync();
+        }
+        catch (IOException)
+        {
+            Flash("The file is too large or could not be read. Import was cancelled.", false);
+            return;
+        }
+
+        var result = BackupValidator.Validate(json);
+        if (!result.IsValid || result.Backup is null)
+        {
+            Flash(result.Error, false);
+            return;
+        }
+
+        pendingBackup = result.Backup;
+        pending = PendingAction.Import;
+    }
+
+    private void AskReset()
+    {
+        pendingBackup = null;
+        pending = PendingAction.Reset;
+    }
+
+    private void CancelPending()
+    {
+        pending = null;
+        pendingBackup = null;
+    }
+
+    private async Task ConfirmPendingAsync()
+    {
+        if (pending == PendingAction.Import)
+        {
+            await ReplaceFromBackupAsync();
+        }
+        else if (pending == PendingAction.Reset)
+        {
+            await ResetAsync();
+        }
+
+        pending = null;
+        pendingBackup = null;
+    }
+
+    private async Task ReplaceFromBackupAsync()
+    {
+        if (pendingBackup?.Finance is null || pendingBackup.Budgets is null)
+        {
+            Flash("The backup could not be applied.", false);
+            return;
+        }
+
+        var financeOk = await Finance.ReplaceFromDocumentAsync(pendingBackup.Finance);
+        var budgetOk = await BudgetStore.ReplaceFromDocumentAsync(pendingBackup.Budgets);
+        var prefsOk = true;
+        if (pendingBackup.Preferences is not null)
+        {
+            prefsOk = await Preferences.ReplaceFromDocumentAsync(pendingBackup.Preferences);
+            displayName = Preferences.Profile.DisplayName;
+            city = Preferences.Profile.City;
+        }
+
+        var stored = financeOk && budgetOk && prefsOk;
+        Flash(stored
+            ? "Backup imported. Local demo data was replaced."
+            : "Backup loaded in this session, but browser storage could not save all of it.", stored);
+    }
+
+    private async Task ResetAsync()
+    {
+        var financeOk = await Finance.ResetToSeedAsync();
+        var budgetOk = await BudgetStore.ResetToSeedAsync();
+        Flash(financeOk && budgetOk
+            ? "Demo transactions and budgets were restored."
+            : "Seed data is restored in this session, but browser storage could not be written.", financeOk && budgetOk);
+    }
+
+    private string ConfirmTitle => pending == PendingAction.Import ? "Replace local data?" : "Reset demo data?";
+    private string ConfirmMessage => pending == PendingAction.Import
+        ? "This replaces the transactions, budgets, and included preferences currently stored in this browser. The change cannot be undone unless you have another backup."
+        : "This clears your edited demo transactions and budgets and restores the original sample set. Profile and theme are left unchanged.";
+    private string ConfirmLabel => pending == PendingAction.Import ? "Replace data" : "Reset data";
+
+    private void Flash(string message, bool ok)
+    {
+        notice = message;
+        noticeTone = ok ? "is-ok" : "is-warn";
+    }
+
+    public void Dispose() => Preferences.Changed -= OnChanged;
+
+    private enum PendingAction
+    {
+        Import,
+        Reset
+    }
+}

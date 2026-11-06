@@ -1,0 +1,78 @@
+@using finora_dashboard.Models
+@using finora_dashboard.Services
+
+<section class="panel" aria-labelledby="@HeadingId">
+    <header class="panel__header">
+        <div>
+            <h2 id="@HeadingId">@Title</h2>
+            <p>@Subtitle</p>
+        </div>
+    </header>
+
+    @if (Points.Count == 0)
+    {
+        <p class="empty">No trend data for this period.</p>
+    }
+    else
+    {
+        <div class="chart" role="img" aria-labelledby="@HeadingId" aria-describedby="@DescId">
+            <p id="@DescId" class="visually-hidden">@Description</p>
+            <div class="plot" style="@PlotColumns">
+                @foreach (var point in Points)
+                {
+                    var value = Selector(point);
+                    <div class="col">
+                        <div class="bars">
+                            <span class="bar @(value < 0 ? "is-neg" : "is-pos")"
+                                  style="@BarStyle(value)"
+                                  title="@($"{point.Month:MMM yyyy}: {Money.Sar(value)}")"></span>
+                        </div>
+                        <span class="tick">@point.Month.ToString("MMM")</span>
+                    </div>
+                }
+            </div>
+        </div>
+        <table class="visually-hidden">
+            <caption>@Title</caption>
+            <thead>
+                <tr>
+                    <th>Month</th>
+                    <th>Amount</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var point in Points)
+                {
+                    <tr>
+                        <td>@Dates.FormatMonth(point.Month)</td>
+                        <td>@Money.Sar(Selector(point))</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</section>
+
+@code {
+    [Parameter, EditorRequired] public string Title { get; set; } = "";
+    [Parameter] public string Subtitle { get; set; } = "";
+    [Parameter, EditorRequired] public IReadOnlyList<TrendPoint> Points { get; set; } = [];
+    [Parameter, EditorRequired] public Func<TrendPoint, decimal> Selector { get; set; } = _ => 0;
+
+    private string HeadingId => $"trend-{Title.ToLowerInvariant().Replace(' ', '-')}";
+    private string DescId => $"{HeadingId}-desc";
+    private decimal Max => Math.Max(1, Points.Select(p => Math.Abs(Selector(p))).DefaultIfEmpty().Max());
+    private string Description => string.Join(". ", Points.Select(p => $"{p.Month:MMMM}: {Money.Sar(Selector(p))}"));
+    private string PlotColumns => $"grid-template-columns: repeat({Math.Max(1, Points.Count)}, minmax(0, 1fr));";
+
+    private string BarStyle(decimal value)
+    {
+        if (value == 0)
+        {
+            return "height:0";
+        }
+
+        var height = Math.Max(4, (double)(Math.Abs(value) / Max) * 100d);
+        return $"height:{height:0.##}%";
+    }
+}

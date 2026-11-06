@@ -1,0 +1,46 @@
+@using finora_dashboard.Models
+@using finora_dashboard.Services
+
+<header class="header">
+    <button type="button"
+            class="header__menu"
+            aria-label="@(NavOpen ? "Close navigation" : "Open navigation")"
+            aria-expanded="@NavOpen"
+            aria-controls="app-sidebar"
+            @onclick="OnToggleNav">
+        <Icon Name="@(NavOpen ? "close" : "menu")" />
+    </button>
+
+    <div class="header__copy">
+        <p class="kicker">@Greeting <span class="demo-chip">Sample data</span></p>
+        <p class="header__title">Welcome back, @Profile.FirstName</p>
+    </div>
+
+    <div class="header__meta">
+        <time datetime="@Today.ToString("yyyy-MM-dd")">@Dates.FormatWeekday(Today)</time>
+        <div class="header__profile" title="@Profile.FullName">
+            <span class="header__city">@Profile.City</span>
+            <span class="header__avatar" aria-hidden="true">@Profile.Initials</span>
+            <span class="visually-hidden">Demo profile, @Profile.FullName</span>
+        </div>
+    </div>
+</header>
+
+@code {
+    [Parameter, EditorRequired] public DemoProfile Profile { get; set; } = default!;
+    [Parameter] public bool NavOpen { get; set; }
+    [Parameter] public EventCallback OnToggleNav { get; set; }
+
+    private DateTime Today => DateTime.Now;
+
+    private string Greeting
+    {
+        get
+        {
+            var hour = Today.Hour;
+            if (hour < 12) return "Good morning";
+            if (hour < 18) return "Good afternoon";
+            return "Good evening";
+        }
+    }
+}

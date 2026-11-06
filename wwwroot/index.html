@@ -4,10 +4,30 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>finora-dashboard</title>
+    <meta name="description" content="FINORA is a .NET 10 Blazor WebAssembly personal-finance dashboard. Sample data stays in this browser. There is no bank connection." />
+    <title>FINORA</title>
     <base href="/" />
+    <script>
+        (function () {
+            try {
+                var raw = window.localStorage.getItem("finora.preferences.v1");
+                if (!raw) {
+                    return;
+                }
+                var prefs = JSON.parse(raw);
+                if ((prefs.theme || "").toLowerCase() === "dark") {
+                    document.documentElement.setAttribute("data-theme", "dark");
+                    document.documentElement.style.colorScheme = "dark";
+                }
+            } catch (e) {
+                // Keep the default light theme if stored preferences cannot be read.
+            }
+        })();
+    </script>
     <link rel="preload" id="webassembly" />
-    <link rel="stylesheet" href="lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="css/app.css" />
     <link rel="icon" type="image/png" href="favicon.png" />
     <link href="finora-dashboard.styles.css" rel="stylesheet" />
@@ -28,6 +48,7 @@
         <a href="." class="reload">Reload</a>
         <span class="dismiss">🗙</span>
     </div>
+    <script src="js/finora.js"></script>
     <script src="_framework/blazor.webassembly#[.{fingerprint}].js"></script>
 </body>
 

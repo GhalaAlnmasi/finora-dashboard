@@ -1,16 +1,56 @@
 ﻿@inherits LayoutComponentBase
-<div class="page">
-    <div class="sidebar">
-        <NavMenu />
-    </div>
+@implements IDisposable
+@inject PreferencesService Preferences
+@inject TransactionStateService Finance
+@inject BudgetStateService BudgetStore
 
-    <main>
-        <div class="top-row px-4">
-            <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
-        </div>
+<a class="skip-link" href="#main-content">Skip to content</a>
 
-        <article class="content px-4">
+<div class="shell" @onkeydown="OnShellKey">
+    @if (navOpen)
+    {
+        <div class="nav-backdrop" @onclick="CloseNav"></div>
+    }
+
+    <aside id="app-sidebar" class="sidebar @(navOpen ? "is-open" : null)">
+        <NavMenu Profile="Preferences.Profile" OnNavigate="CloseNav" />
+    </aside>
+
+    <div class="workspace">
+        <AppHeader Profile="Preferences.Profile" NavOpen="navOpen" OnToggleNav="ToggleNav" />
+        <main id="main-content" class="workspace-main">
             @Body
-        </article>
-    </main>
+        </main>
+    </div>
 </div>
+
+@code {
+    private bool navOpen;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Preferences.Changed += OnChanged;
+        Finance.Changed += OnChanged;
+        await Preferences.EnsureLoadedAsync();
+        await Finance.EnsureLoadedAsync();
+        await BudgetStore.EnsureLoadedAsync();
+    }
+
+    private void ToggleNav() => navOpen = !navOpen;
+    private void CloseNav() => navOpen = false;
+    private void OnChanged() => InvokeAsync(StateHasChanged);
+
+    private void OnShellKey(KeyboardEventArgs args)
+    {
+        if (args.Key == "Escape" && navOpen)
+        {
+            CloseNav();
+        }
+    }
+
+    public void Dispose()
+    {
+        Preferences.Changed -= OnChanged;
+        Finance.Changed -= OnChanged;
+    }
+}

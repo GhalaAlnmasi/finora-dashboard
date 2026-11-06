@@ -1,0 +1,99 @@
+<svg xmlns="http://www.w3.org/2000/svg"
+     viewBox="0 0 24 24"
+     fill="none"
+     stroke="currentColor"
+     stroke-width="1.75"
+     stroke-linecap="round"
+     stroke-linejoin="round"
+     aria-hidden="true"
+     class="@Class">
+    @switch (Name)
+    {
+        case "overview":
+            <rect x="3" y="3" width="8" height="8" rx="2" />
+            <rect x="13" y="3" width="8" height="5" rx="2" />
+            <rect x="13" y="10" width="8" height="11" rx="2" />
+            <rect x="3" y="13" width="8" height="8" rx="2" />
+            break;
+        case "transactions":
+            <path d="M8 7h12M8 12h12M8 17h8" />
+            <circle cx="4.5" cy="7" r="1" fill="currentColor" stroke="none" />
+            <circle cx="4.5" cy="12" r="1" fill="currentColor" stroke="none" />
+            <circle cx="4.5" cy="17" r="1" fill="currentColor" stroke="none" />
+            break;
+        case "budgets":
+            <path d="M4 19V7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v12" />
+            <path d="M8 19v-6M12 19V9M16 19v-4" />
+            <path d="M3 19h18" />
+            break;
+        case "analytics":
+            <path d="M4 19V5M4 19h16" />
+            <path d="M7 14l3.5-4 3 2.5L19 7" />
+            <circle cx="19" cy="7" r="1.2" fill="currentColor" stroke="none" />
+            break;
+        case "settings":
+            <circle cx="12" cy="12" r="3" />
+            <path d="M12 3v2M12 19v2M5 12H3M21 12h-2M6.2 6.2l1.4 1.4M16.4 16.4l1.4 1.4M17.8 6.2l-1.4 1.4M7.6 16.4l-1.4 1.4" />
+            break;
+        case "menu":
+            <path d="M4 7h16M4 12h16M4 17h16" />
+            break;
+        case "close":
+            <path d="M6 6l12 12M18 6L6 18" />
+            break;
+        case "chevron-left":
+            <path d="M14 6l-6 6 6 6" />
+            break;
+        case "chevron-right":
+            <path d="M10 6l6 6-6 6" />
+            break;
+        case "wallet":
+            <rect x="3" y="6" width="18" height="13" rx="2.5" />
+            <path d="M3 10h18" />
+            <circle cx="16.5" cy="14.5" r="1" fill="currentColor" stroke="none" />
+            break;
+        case "income":
+            <path d="M12 19V7" />
+            <path d="M7 12l5-5 5 5" />
+            <path d="M5 19h14" />
+            break;
+        case "expense":
+            <path d="M12 5v12" />
+            <path d="M7 12l5 5 5-5" />
+            <path d="M5 5h14" />
+            break;
+        case "savings":
+            <path d="M12 3c4 3.2 6.5 6.6 6.5 10.2A6.5 6.5 0 0 1 5.5 13.2C5.5 9.6 8 6.2 12 3Z" />
+            <path d="M10 16.5c.6 1.3 1.4 2 2 2.5.6-.5 1.4-1.2 2-2.5" />
+            break;
+        case "calendar":
+            <rect x="3.5" y="5" width="17" height="15" rx="2" />
+            <path d="M8 3.5V7M16 3.5V7M3.5 10h17" />
+            break;
+        case "plus":
+            <path d="M12 5v14M5 12h14" />
+            break;
+        case "edit":
+            <path d="M4 20h4l10.5-10.5-4-4L4 16v4Z" />
+            <path d="M13.5 6.5l4 4" />
+            break;
+        case "trash":
+            <path d="M5 7h14M10 7V5h4v2M8 7l1 12h6l1-12" />
+            break;
+        case "search":
+            <circle cx="11" cy="11" r="6" />
+            <path d="M16 16l4 4" />
+            break;
+        case "sort":
+            <path d="M8 7l4-4 4 4M8 17l4 4 4-4" />
+            break;
+        default:
+            <circle cx="12" cy="12" r="8" />
+            break;
+    }
+</svg>
+
+@code {
+    [Parameter] public string Name { get; set; } = "";
+    [Parameter] public string? Class { get; set; }
+}

@@ -1,0 +1,77 @@
+@using finora_dashboard.Models
+@using finora_dashboard.Services
+
+<section class="panel" aria-labelledby="trend-heading">
+    <header class="panel__header">
+        <div>
+            <h2 id="trend-heading">Income vs expenses</h2>
+            <p>@HeaderSub</p>
+        </div>
+    </header>
+
+    @if (Points.Count == 0)
+    {
+        <p class="empty">No trend data for this period.</p>
+    }
+    else
+    {
+        <div class="chart" role="img" aria-labelledby="trend-heading" aria-describedby="trend-desc">
+            <p id="trend-desc" class="visually-hidden">@Description</p>
+            <div class="plot" style="@PlotColumns">
+                @foreach (var point in Points)
+                {
+                    <div class="col">
+                        <div class="bars">
+                            <span class="bar bar--income" style="@BarStyle(point.Income)" title="@($"Income {Money.Sar(point.Income)}")"></span>
+                            <span class="bar bar--expense" style="@BarStyle(point.Expenses)" title="@($"Expenses {Money.Sar(point.Expenses)}")"></span>
+                        </div>
+                        <span class="tick">@point.Month.ToString("MMM")</span>
+                    </div>
+                }
+            </div>
+        </div>
+        <ul class="legend">
+            <li><span class="swatch swatch--income"></span> Income</li>
+            <li><span class="swatch swatch--expense"></span> Expenses</li>
+        </ul>
+        <table class="visually-hidden">
+            <caption>Income and expenses by month</caption>
+            <thead>
+                <tr>
+                    <th>Month</th>
+                    <th>Income</th>
+                    <th>Expenses</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var point in Points)
+                {
+                    <tr>
+                        <td>@Dates.FormatMonth(point.Month)</td>
+                        <td>@Money.Sar(point.Income)</td>
+                        <td>@Money.Sar(point.Expenses)</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</section>
+
+@code {
+    [Parameter, EditorRequired] public IReadOnlyList<TrendPoint> Points { get; set; } = [];
+    [Parameter] public string? Subtitle { get; set; }
+
+    private decimal Max => Math.Max(1, Points.SelectMany(p => new[] { p.Income, p.Expenses }).DefaultIfEmpty().Max());
+    private string EndLabel => Points.Count == 0 ? string.Empty : Dates.FormatMonth(Points[^1].Month);
+    private string HeaderSub => Subtitle ?? $"Six-month trend ending {EndLabel}";
+    private string Description => string.Join(". ", Points.Select(p =>
+        $"{p.Month:MMMM}: income {Money.Sar(p.Income)}, expenses {Money.Sar(p.Expenses)}"));
+
+    private string PlotColumns => $"grid-template-columns: repeat({Math.Max(1, Points.Count)}, minmax(0, 1fr));";
+
+    private string BarStyle(decimal value)
+    {
+        var height = Math.Max(4, (double)(value / Max) * 100d);
+        return $"height:{height:0.##}%";
+    }
+}

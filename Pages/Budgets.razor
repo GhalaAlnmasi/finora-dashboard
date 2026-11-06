@@ -1,0 +1,208 @@
+@page "/budgets"
+@implements IDisposable
+@inject TransactionStateService Transactions
+@inject BudgetStateService BudgetStore
+
+<PageTitle>Budgets · FINORA</PageTitle>
+
+<div class="page">
+    <div class="page__intro">
+        <div>
+            <p class="eyebrow">Budgets</p>
+            <h1>Monthly envelopes</h1>
+            <p class="sub">Set category limits in SAR. Spent amounts come from completed demo transactions for the selected month — scheduled items are excluded.</p>
+        </div>
+        <div class="page__tools">
+            @if (Transactions.IsReady && BudgetStore.IsReady)
+            {
+                <MonthSelector Months="Months" Selected="selectedMonth" SelectedChanged="OnMonthChanged" />
+            }
+            <button type="button" class="btn btn-primary" @onclick="OpenCreate" disabled="@(!CanAdd)">
+                <Icon Name="plus" />
+                Add budget
+            </button>
+        </div>
+    </div>
+
+    @if (!Transactions.IsReady || !BudgetStore.IsReady)
+    {
+        <p class="demo-note">Loading local demo data…</p>
+    }
+    else
+    {
+        <p class="demo-note">Demo workspace · budgets stored as @BudgetStateService.StorageKey · spending from shared transactions.</p>
+
+        @if (progress.Count > 0)
+        {
+            <section class="summary" aria-label="Budget summary">
+                <article>
+                    <p>Budgeted</p>
+                    <strong>@Money.Sar(progress.Sum(p => p.Budget.Limit))</strong>
+                </article>
+                <article>
+                    <p>Spent</p>
+                    <strong>@Money.Sar(progress.Sum(p => p.Spent))</strong>
+                </article>
+                <article>
+                    <p>Remaining</p>
+                    <strong>@Money.Sar(progress.Sum(p => p.Remaining))</strong>
+                </article>
+                <article>
+                    <p>Needs attention</p>
+                    <strong>@progress.Count(p => p.Health != BudgetHealth.OnTrack)</strong>
+                </article>
+            </section>
+
+            <div class="grid">
+                @foreach (var item in progress)
+                {
+                    <BudgetCard Progress="item"
+                                OnEdit="() => OpenEdit(item.Budget)"
+                                OnDelete="() => AskDelete(item.Budget)" />
+                }
+            </div>
+        }
+        else
+        {
+            <div class="empty-card">
+                <h2>No budgets for @Dates.FormatMonth(selectedMonth)</h2>
+                <p>Create a category envelope to track completed spending against a monthly limit.</p>
+                <button type="button" class="btn btn-primary" @onclick="OpenCreate">Add budget</button>
+            </div>
+        }
+    }
+</div>
+
+<BudgetEditor Draft="draft"
+              Categories="editorCategories"
+              Error="editorError"
+              OnCancel="CloseEditor"
+              OnSave="SaveEditorAsync" />
+<ConfirmDialog Open="pendingDelete is not null"
+               Title="Delete budget"
+               Message="@DeleteMessage"
+               ConfirmLabel="Delete"
+               OnCancel="CancelDelete"
+               OnConfirm="ConfirmDeleteAsync" />
+
+@code {
+    private DateOnly selectedMonth;
+    private IReadOnlyList<BudgetProgress> progress = [];
+    private BudgetDraft? draft;
+    private string? editorError;
+    private CategoryBudget? pendingDelete;
+    private IReadOnlyList<string> editorCategories = [];
+
+    private IReadOnlyList<DateOnly> Months => BudgetStore.AvailableMonths;
+    private bool CanAdd => BudgetStore.IsReady && BudgetStore.AvailableCategories(selectedMonth).Count > 0;
+
+    private string DeleteMessage => pendingDelete is null
+        ? ""
+        : $"Remove the {pendingDelete.Category} envelope for {Dates.FormatMonth(pendingDelete.Month)}? Spending history is kept; only this demo budget is deleted.";
+
+    protected override async Task OnInitializedAsync()
+    {
+        Transactions.Changed += OnChanged;
+        BudgetStore.Changed += OnChanged;
+        await Transactions.EnsureLoadedAsync();
+        await BudgetStore.EnsureLoadedAsync();
+        selectedMonth = Transactions.DefaultMonth;
+        Refresh();
+    }
+
+    private void OnChanged()
+    {
+        InvokeAsync(() =>
+        {
+            if (!Months.Contains(selectedMonth) && Months.Count > 0)
+            {
+                selectedMonth = Months.Contains(Transactions.DefaultMonth)
+                    ? Transactions.DefaultMonth
+                    : Months[^1];
+            }
+
+            Refresh();
+            StateHasChanged();
+        });
+    }
+
+    private void OnMonthChanged(DateOnly month)
+    {
+        selectedMonth = month;
+        Refresh();
+    }
+
+    private void Refresh()
+    {
+        if (!BudgetStore.IsReady)
+        {
+            return;
+        }
+
+        progress = BudgetStore.GetMonthProgress(selectedMonth);
+    }
+
+    private void OpenCreate()
+    {
+        editorError = null;
+        editorCategories = BudgetStore.AvailableCategories(selectedMonth);
+        draft = BudgetDraft.NewDraft(selectedMonth);
+    }
+
+    private void OpenEdit(CategoryBudget budget)
+    {
+        editorError = null;
+        editorCategories = BudgetStore.AvailableCategories(budget.Month, budget.Id);
+        if (!editorCategories.Contains(budget.Category))
+        {
+            editorCategories = editorCategories.Append(budget.Category).ToList();
+        }
+
+        draft = BudgetDraft.From(budget);
+    }
+
+    private void CloseEditor()
+    {
+        draft = null;
+        editorError = null;
+    }
+
+    private async Task SaveEditorAsync(BudgetDraft value)
+    {
+        editorError = BudgetStore.Validate(value);
+        if (editorError is not null)
+        {
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(value.Id))
+        {
+            await BudgetStore.AddAsync(value);
+        }
+        else
+        {
+            await BudgetStore.UpdateAsync(value);
+        }
+
+        draft = null;
+    }
+
+    private void AskDelete(CategoryBudget budget) => pendingDelete = budget;
+    private void CancelDelete() => pendingDelete = null;
+
+    private async Task ConfirmDeleteAsync()
+    {
+        if (pendingDelete is not null)
+        {
+            await BudgetStore.DeleteAsync(pendingDelete.Id);
+        }
+
+        pendingDelete = null;
+    }
+
+    public void Dispose()
+    {
+        Transactions.Changed -= OnChanged;
+        BudgetStore.Changed -= OnChanged;
+    }
+}
